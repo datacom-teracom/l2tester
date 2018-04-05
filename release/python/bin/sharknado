@@ -1,0 +1,484 @@
+#! /usr/bin/env python
+
+from l2tester.bandwidth import Monitor, Sender
+
+from l2tester.packet import *
+from scapy.route import *
+from scapy.layers.all import *
+
+import time
+from threading import Thread
+
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.figure import Figure
+
+###############################################################################
+
+class MonitorCanvas(FigureCanvas):
+
+	def __init__(self):
+		FigureCanvas.__init__(self, Figure())
+		self.reset()
+
+	def reset(self):
+		self.figure.clear()
+		self.ax = self.figure.add_subplot(111)
+		self.ax.grid()
+		self.ax.set_ylim(0.0, 15000.0)
+		self.ax.set_xlim(0.0, 60.0)
+		self.ax.set_xlabel("Time (s)")
+		self.ax.set_ylabel("Bandwidth (kbps)")
+		self.draw()
+
+###############################################################################
+
+class Updater(Thread):
+
+	def __init__(self, rx_widget):
+		Thread.__init__(self)
+		self.rx_widget = rx_widget
+		self.keep_running = True
+
+	def stop(self):
+		self.keep_running = False
+
+	def run(self):
+
+		self.rx_widget.canvas.draw()
+
+		while self.keep_running:
+			time.sleep(0.5)
+
+			self.rx_widget.canvas.blit(self.rx_widget.canvas.ax.bbox)
+			if not self.rx_widget.sniffer.instance:
+				continue
+
+			# First, update stream data:
+			for rx_stream in self.rx_widget.rx_streams:
+				if not rx_stream.instance:
+					continue
+
+				# Read from RxStream
+				while True:
+					read = rx_stream.instance.instance.iterate_reading(0,False)
+					if not read:
+						break
+					rx_stream.x_data.append(read.timestamp_ms/1000.0)
+					rx_stream.y_data.append(read.bits_per_sec/1000.0)
+					#print "[%.2f] %.1f Kbps" % (rx_stream.x_data[-1], rx_stream.y_data[-1])
+
+				# Update line
+				rx_stream.line.set_data(rx_stream.x_data, rx_stream.y_data)
+				self.rx_widget.canvas.ax.draw_artist(rx_stream.line)
+
+
+###############################################################################
+
+class QRxWidget(QWidget):
+
+	def __init__(self, parent=None):
+		QWidget.__init__(self,parent)
+
+		self.title = QLabel("Rx Bandwidth", self)
+		self.title.setFrameStyle(QFrame.Panel | QFrame.Raised)
+ 		self.title.setLineWidth(2)
+
+		# Create the Monitor Bandwidth Graph Output
+		self.canvas = MonitorCanvas()
+		self.canvas.setParent(self)
+		# Create the navigation toolbar, tied to the canvas
+		self.mpl_toolbar = NavigationToolbar(self.canvas, self)
+
+		# Create Monitor configuration
+		self.sniffer = QMonitor()
+		self.connect(self.sniffer, SIGNAL('started(bool)'), self.sniffer_started)
+
+		line = QFrame()
+		line.setFrameShape(QFrame.HLine)
+		line.setFrameShadow(QFrame.Sunken)
+
+		self.rx_streams = []
+
+		grid = QRxStreamLayout()
+		self.rx_streams.append(	QRxStream(grid, 1, self.sniffer, self.canvas) )
+		self.rx_streams.append( QRxStream(grid, 2, self.sniffer, self.canvas) )
+
+		vbox = QVBoxLayout()
+
+		vbox.addWidget( self.title )
+		vbox.addLayout( self.sniffer )
+		vbox.addWidget( line )
+		vbox.addLayout( grid )
+		vbox.addWidget( line )
+		vbox.addWidget( self.canvas, 100 )
+		vbox.addWidget( self.mpl_toolbar )
+
+		self.setLayout(vbox)
+		self.updater = None
+
+	def sniffer_started(self, start):
+
+		if start:
+			self.canvas.reset()
+
+			for rx_stream in self.rx_streams:
+				if not rx_stream.instance:
+					continue
+				rx_stream.x_data = []
+				rx_stream.y_data = []
+				args = [ [], [] ]
+				style = rx_stream.style.text()
+				if style:
+					args.append(str(style))
+				rx_stream.line, = self.canvas.ax.plot(*args, scalex=False, scaley=False, animated=True)
+
+			if self.updater:
+				self.updater.stop()
+				self.updater.join()
+			self.updater = Updater(self)
+			self.updater.daemon = True
+			self.updater.start()
+
+###############################################################################
+
+class QRxStreamLayout(QGridLayout):
+
+	def __init__(self, parent=None):
+
+		QGridLayout.__init__(self, parent)
+		self.addWidget( QLabel("Filter"), 0, 0 )
+		self.addWidget( QLabel("Style"), 0, 1 )
+		self.setColumnStretch( 0, 100 )
+
+###############################################################################
+
+class QRxStream(QObject):
+
+	def __init__(self, grid, row, sniffer, canvas):
+		QObject.__init__(self)
+
+		self.sniffer = sniffer
+		self.canvas = canvas
+
+		self.filter_args = QLineEdit()
+		self.style = QLineEdit()
+		self.add = QPushButton("Add")
+
+		grid.addWidget( self.filter_args, row, 0 )
+		grid.addWidget( self.style, row, 1 )
+		grid.addWidget( self.add, row, 2 )
+
+		self.add.setCheckable(True)
+		self.add.setEnabled(False)
+		self.connect(self.add, SIGNAL('clicked(bool)'), self.add_stream)
+		self.connect(self.sniffer, SIGNAL('created(bool)'), self.sniffer_created)
+		self.connect(self.sniffer, SIGNAL('started(bool)'), self.add.setDisabled)
+		self.connect(self.sniffer, SIGNAL('started(bool)'), self.style.setDisabled)
+
+		self.instance = None
+		self.x_data = None
+		self.y_data = None
+		self.line = None
+
+	def sniffer_created(self, created):
+
+		self.add.setEnabled(created)
+		if not created:
+			self.add.setChecked(False)
+			self.add.setText('Add')	
+			self.style.setEnabled(True)
+			self.filter_args.setEnabled(True)
+
+	def add_stream(self, add):
+
+		if add:
+			print "Adding Stream..."
+			try:
+				self.instance = eval( "self.sniffer.instance.new_stream(%s)" % self.filter_args.text() )
+				self.add.setText('Remove')
+				self.filter_args.setEnabled(False)
+			except Exception as exp:
+				self.add.setChecked(False)
+				QMessageBox.critical(None, QString("Can't create RxStream"), QString(str(exp)))
+
+		else:
+			print "Removing Stream..."
+			self.sniffer.instance.delete_stream(self.instance)
+			self.instance = None
+			self.add.setText('Add')
+			self.filter_args.setEnabled(True)
+
+###############################################################################
+
+class QMonitor(QGridLayout):
+
+	def __init__(self):
+		QGridLayout.__init__(self)
+
+		self.addWidget( QLabel("Interfaces"), 0, 0 )
+		self.addWidget( QLabel("Interval (s)"), 0, 1 )
+		self.setColumnStretch( 0, 100 )
+
+		self.ifaces = QLineEdit()
+		self.interval = QLineEdit("0.5")
+
+		self.create = QPushButton("Create")
+		self.create.setCheckable(True)
+
+		self.start = QPushButton("Start")
+		self.start.setEnabled(False)
+		self.start.setCheckable(True)
+
+		self.connect(self, SIGNAL('created(bool)'), self.start.setEnabled)
+
+		self.addWidget( self.ifaces, 1, 0 )
+		self.addWidget( self.interval, 1, 1 )
+		self.addWidget( self.create, 1, 2 )
+		self.addWidget( self.start, 1, 3 )
+
+		self.connect(self.create, SIGNAL('clicked(bool)'), self.create_sniffer)
+		self.connect(self, SIGNAL('created(bool)'), self.ifaces.setDisabled)
+		self.connect(self, SIGNAL('created(bool)'), self.interval.setDisabled)
+		self.connect(self.start, SIGNAL('clicked(bool)'), self.start_sniffer)
+
+		self.instance = None
+
+	def create_sniffer(self, create):
+
+		if create:
+			print "Creating Monitor..."
+			try:
+				iface_list = map(lambda i: i.strip(), str(self.ifaces.text()).split(','))
+				print " * interfaces: " + str(iface_list)
+				print " * interval: " + str(self.interval.text())
+				self.instance = Monitor( iface_list, float(self.interval.text()) )
+				self.create.setText('Destroy')
+				self.emit( SIGNAL("created(bool)"), True)
+
+			except Exception as exp:
+				self.create.setChecked(False)
+				QMessageBox.critical(None, QString("Can't create Monitor"), QString(str(exp)))
+
+		else:
+			print "Destroy Monitor..."
+			self.instance.stop()
+			self.instance = None
+
+			self.create.setText('Create')
+			self.start.setText('Start')
+			self.start.setChecked(False)
+			self.emit( SIGNAL("created(bool)"), False)
+
+
+	def start_sniffer(self, start):
+
+		if start:
+			print "Starting Monitor..."
+			if self.instance:
+				self.instance.start()
+				self.start.setText('Stop')
+				self.emit( SIGNAL("started(bool)"), True)
+			else:
+				self.start.setChecked(False)
+
+		else:
+			print "Stopping Monitor..."
+			self.instance.stop()	
+			self.start.setText('Start')
+			self.emit( SIGNAL("started(bool)"), False)
+
+###############################################################################
+
+class QTxWidget(QWidget):
+
+	def __init__(self, parent=None):
+
+		QWidget.__init__(self,parent)
+
+		self.title = QLabel("Tx Bandwidth", self)
+		self.title.setFrameStyle(QFrame.Panel | QFrame.Raised)
+		self.title.setLineWidth(2)
+
+		self.tx_streams = []
+
+		grid = QSenderLayout()
+		self.tx_streams.append( QSender(grid, 1) )
+		self.tx_streams.append( QSender(grid, 2) )
+
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.title)
+		vbox.addLayout(grid)
+
+		self.setLayout(vbox)
+
+###############################################################################
+
+class QSenderLayout(QGridLayout):
+
+	def __init__(self, parent=None):
+
+		QGridLayout.__init__(self, parent)
+		self.addWidget( QLabel("Interface"), 0, 0 )
+		self.addWidget( QLabel("Frame"), 0, 1 )
+		self.addWidget( QLabel("Bandwidth"), 0, 2 )
+		self.setColumnStretch( 1, 100 )
+
+###############################################################################
+
+class QSender(QObject):
+
+	def __init__(self, grid, row):
+		QObject.__init__(self)
+
+		self.iface = QLineEdit()
+		self.frame = QLineEdit()
+		self.bandwidth = QSpinBox()
+		self.bandwidth.setRange(0, 100000)
+		self.bandwidth.setSuffix(" kbps")
+		self.bandwidth.setSingleStep(100)	
+		self.start = QPushButton("Start")
+		self.start.setCheckable(True)
+
+		grid.addWidget( self.iface, row, 0 )
+		grid.addWidget( self.frame, row, 1 )
+		grid.addWidget( self.bandwidth, row, 2 )
+		grid.addWidget( self.start, row, 3 )
+
+		self.connect(self.start, SIGNAL('clicked(bool)'), self.start_bandwidth)
+		self.connect(self.bandwidth, SIGNAL('valueChanged(int)'), self.update_bandwidth)
+		self.instance = None
+
+	def start_bandwidth(self, start):
+
+		if start:
+			print "Starting Bandwidth from interface " + self.iface.text() + " ..."
+			try:
+				self.packet = eval( str(self.frame.text()) )
+				self.instance = Sender( str(self.iface.text()), self.packet )
+				self.instance.auto_bandwidth( self.bandwidth.value() )
+				self.instance.start()
+				self.iface.setEnabled(False)
+				self.frame.setEnabled(False)
+				self.start.setText('Stop')
+
+			except Exception as exp:
+				self.start.setChecked(False)
+				QMessageBox.critical(None, QString("Can't start Sender"), QString(str(exp)))
+		else:
+			self.start.setText('Start')
+			print "Stopping Bandwidth..."
+			self.instance.stop()
+			self.instance = None
+
+			self.iface.setEnabled(True)
+			self.frame.setEnabled(True)
+
+	def update_bandwidth(self, value):
+
+		if self.instance:
+			self.instance.auto_bandwidth( value )
+
+###############################################################################
+
+class L2TesterBandwidth(QMainWindow):
+
+	def __init__(self, parent=None):
+
+		QMainWindow.__init__(self, parent)
+		self.setWindowTitle('L2T::Bandwidth')
+
+		self.main_frame = QWidget()
+
+		self.tx_widget = QTxWidget(self)
+		self.rx_widget = QRxWidget(self)
+
+		vbox = QVBoxLayout()
+		vbox.addWidget(self.tx_widget)
+		vbox.addWidget(self.rx_widget)
+
+		self.main_frame.setLayout(vbox)
+		self.setCentralWidget(self.main_frame)
+
+#	def save_plot(self):
+#		file_choices = "PNG (*.png)|*.png"
+#		
+#		path = unicode(QFileDialog.getSaveFileName(self, 
+#						'Save file', '', 
+#						file_choices))
+#		if path:
+#			self.canvas.print_figure(path, dpi=self.dpi)
+#			self.statusBar().showMessage('Saved to %s' % path, 2000)
+	
+#	def on_about(self):
+#		msg = """ A demo of using PyQt with matplotlib:
+#		
+#		 * Use the matplotlib navigation bar
+#		 * Add values to the text box and press Enter (or click "Draw")
+#		 * Show or hide the grid
+#		 * Drag the slider to modify the width of the bars
+#		 * Save the plot to a file using the File menu
+#		 * Click on a bar to receive an informative message
+#		"""
+#		QMessageBox.about(self, "About the demo", msg.strip())
+#	
+	
+#	def create_status_bar(self):
+#		self.status_text = QLabel("This is a demo")
+#		self.statusBar().addWidget(self.status_text, 1)
+		
+#	def create_menu(self):		
+#		self.file_menu = self.menuBar().addMenu("&File")
+#		
+#		load_file_action = self.create_action("&Save plot",
+#			shortcut="Ctrl+S", slot=self.save_plot, 
+#			tip="Save the plot")
+#		quit_action = self.create_action("&Quit", slot=self.close, 
+#			shortcut="Ctrl+Q", tip="Close the application")
+#		
+#		self.add_actions(self.file_menu, 
+#			(load_file_action, None, quit_action))
+#		
+#		self.help_menu = self.menuBar().addMenu("&Help")
+#		about_action = self.create_action("&About", 
+#			shortcut='F1', slot=self.on_about, 
+#			tip='About the demo')
+#		
+#		self.add_actions(self.help_menu, (about_action,))
+
+#	def add_actions(self, target, actions):
+#		for action in actions:
+#			if action is None:
+#				target.addSeparator()
+#			else:
+#				target.addAction(action)
+
+#	def create_action(  self, text, slot=None, shortcut=None, 
+#						icon=None, tip=None, checkable=False, 
+#						signal="triggered()"):
+#		action = QAction(text, self)
+#		if icon is not None:
+#			action.setIcon(QIcon(":/%s.png" % icon))
+#		if shortcut is not None:
+#			action.setShortcut(shortcut)
+#		if tip is not None:
+#			action.setToolTip(tip)
+#			action.setStatusTip(tip)
+#		if slot is not None:
+#			self.connect(action, SIGNAL(signal), slot)
+#		if checkable:
+#			action.setCheckable(True)
+#		return action
+
+def main():
+	app = QApplication(sys.argv)
+	main_window = L2TesterBandwidth()
+	main_window.resize(QSize(800, 800))
+	main_window.show()
+	app.exec_()
+
+if __name__ == "__main__":
+	main()
