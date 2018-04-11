@@ -127,6 +127,45 @@ It integrates naturally with Python and Ruby test frameworks.
 It is fast! It will not increase the time of your tests beyond the acceptable.
 
 
+## How to build with Python wrappers
+
+These instruction are currently tested on Ubuntu 14.04 using Python 2.7. Other distros or Python
+versions might work just fine, but they were never tested, so 14.04 with Python 2.7 should give you
+the most trustworthy results.
+
+Getting the dependecies:
+
+   ```sh
+   pip install pyroute2
+   sudo apt-get install swig python-dev
+   ```
+
+Building:
+
+   ```sh
+   git clone https://github.com/datacom-teracom/l2tester.git
+   cd l2tester
+   make python # e.g build the Python wrappers
+   sudo make install # install Python module
+   ```
+
+To send packets through the computer interface without needing sudo permissions for every user, it
+is recommended to set permissions for the Python application to access the network interfaces:
+
+   ```sh
+   sudo setcap cap_mac_admin,cap_net_raw,cap_net_admin=eip /usr/bin/python2.7
+   ```
+
+If necessary, replace `python2.7` by your local version of Python.
+
+### Building for other languages
+
+You can replace `make python` by `make lua` or `make ruby` depending on the scripting language you
+want to use. There's also `make cpp` which generates static and dynamic libraries without any
+wrappers.
+
+You may need to install adittional dependencies, such as the Ruby or the Lua runtime.
+
 ## Sharknado
 
 Sharknado is an experimental GUI for L2 Tester (there are lots of bugs in there!)
