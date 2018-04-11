@@ -48,13 +48,24 @@ cpp: create_build_dir $(OBJS)
 
 #make lua
 LUA_INCLUDE := -I$(LUA_PATH)
-lua: lua_wrapper
+lua: lua_check lua_wrapper
+
+lua_check:
+ifndef LUA_PATH
+	$(error Lua not found. You need to specify the LUA_PATH environment variable in order to compile the Lua wrappers. E.g. export LUA_PATH=/home/user/projects/lua/lua-5.2.3/src/)
+endif
+
 
 # make ruby
 RUBY_INCLUDE := -I$(RUBY_PATH) -I$(RUBY_PATH)/x86_64-linux/
 
 RUBY_BIN := $(shell readlink -f `which ruby`)
-ruby: ruby_wrapper
+ruby: ruby_check ruby_wrapper
+
+ruby_check:
+ifndef RUBY_PATH
+	$(error Ruby not found. You need to specify the RUBY_PATH environment variable in order to compile the Ruby wrappers. E.g. export RUBY_PATH=/home/user/.rbenv/versions/2.1.5/include/ruby-2.1.0/)
+endif
 
 # make python
 PYTHON_INCLUDE := $(shell python-config --includes)
