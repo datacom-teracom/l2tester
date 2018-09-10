@@ -91,7 +91,7 @@ class Monitor(l2tester.Bandwidth_Monitor):
 		"""
 		l2tester.Bandwidth_Monitor.__init__(self, interfaces, int(measure_interval*1000))
 
-	def new_stream(self, dst_mac=None, src_mac=None, outer_tpid=None, outer_vlan=None, outer_prio=None, inner_tpid=None, inner_vlan=None, inner_prio=None):
+	def new_stream(self, dst_mac=None, src_mac=None, outer_tpid=None, outer_vlan=None, outer_prio=None, inner_tpid=None, inner_vlan=None, inner_prio=None, generic_filter=None):
 		""" Create a new Stream associated with this Monitor.
 		@param dst_mac       Filter by Destination MAC.
 		@param src_mac       Filter by Source MAC.
@@ -101,40 +101,48 @@ class Monitor(l2tester.Bandwidth_Monitor):
 		@inner_tpid          Filter by Inner TPID or Ethertype for tagged frames.
 		@inner_vlan          Filter by Inner Vlan (Costumer VLAN)
 		@inner_prio          Filter by Outer 802.1p priority
+		@generic_filter      Generic user-defined filtered frames
 		"""
+
 		filter_desc = []
-		filter = l2tester.EthernetFilter()
 		name = "[Global]"
 
-		if dst_mac != None:
-			filter.dst_mac = dst_mac
-			filter_desc.append("dstMac " + dst_mac)
-		if src_mac != None:
-			filter.src_mac = src_mac
-			filter_desc.append("srcMac " + src_mac)
-		if outer_tpid != None:
-			filter.outer_tpid = outer_tpid
-			filter_desc.append("oTpid " + str(outer_tpid))
-		if outer_vlan != None:
-			filter.outer_vlan = outer_vlan
-			filter_desc.append("oVlan " + str(outer_vlan))
-		if outer_prio != None:
-			filter.outer_prio = outer_prio
-			filter_desc.append("oPrio " + str(outer_prio))
-		if inner_tpid != None:
-			filter.inner_tpid = inner_tpid
-			filter_desc.append("iTpid " + str(inner_tpid))
-		if inner_vlan != None:
-			filter.inner_vlan = inner_vlan
-			filter_desc.append("iVlan " + str(inner_vlan))
-		if inner_prio != None:
-			filter.inner_prio = inner_prio
-			filter_desc.append("iPrio " + str(inner_prio))
+		if generic_filter is None:
+			filter = l2tester.EthernetFilter()
+
+			if dst_mac != None:
+				filter.dst_mac = dst_mac
+				filter_desc.append("dstMac " + dst_mac)
+			if src_mac != None:
+				filter.src_mac = src_mac
+				filter_desc.append("srcMac " + src_mac)
+			if outer_tpid != None:
+				filter.outer_tpid = outer_tpid
+				filter_desc.append("oTpid " + str(outer_tpid))
+			if outer_vlan != None:
+				filter.outer_vlan = outer_vlan
+				filter_desc.append("oVlan " + str(outer_vlan))
+			if outer_prio != None:
+				filter.outer_prio = outer_prio
+				filter_desc.append("oPrio " + str(outer_prio))
+			if inner_tpid != None:
+				filter.inner_tpid = inner_tpid
+				filter_desc.append("iTpid " + str(inner_tpid))
+			if inner_vlan != None:
+				filter.inner_vlan = inner_vlan
+				filter_desc.append("iVlan " + str(inner_vlan))
+			if inner_prio != None:
+				filter.inner_prio = inner_prio
+				filter_desc.append("iPrio " + str(inner_prio))
+
+			filter.compile()
+		else:
+			filter = generic_filter
+			filter_desc.append("User-Defined")
 
 		if filter_desc:
 			name = "[" + ", ".join(filter_desc) + "]"
 
-		filter.compile()
 		return Stream(l2tester.Bandwidth_Monitor.new_stream(self, filter), name)
 
 	def delete_stream(self, stream):
