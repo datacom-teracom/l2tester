@@ -384,12 +384,12 @@ def protocol_frame(protocol, source='unicast', vlans = []):
 
 	pdu = pdu / info['load']
 
-	# Process PDU so length field is correctly calculated.
-	pdu = Ether(str(pdu))
-
 	# Add Padding and return.
 	padding = 64 - len(pdu) + 4 #FCS
 	if padding > 0 :
 		pdu = pdu / Padding(load = '\0' * padding)
+
+	#Process PDU so length field is correctly calculated.
+	pdu = Ether(str(pdu))
 
 	return pdu
