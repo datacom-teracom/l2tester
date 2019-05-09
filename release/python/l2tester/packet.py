@@ -72,11 +72,11 @@ def dot1q_summary(self):
 Dot1Q.mysummary = dot1q_summary
 
 def dot1q_post_build(self, packet, payload):
-	""" Implement post build to calculate length for 802.3 frame. 
+	""" Implement post build to calculate length for 802.3 frame.
 	"""
 	if self.type == None or self.type <= 1500 :
 		l = len(payload)
-		packet = packet[:2] + chr((l>>8)&0xff) + chr(l&0xff)
+		packet = packet[:2] + chr((l >> 8) & 0xff) + chr(l & 0xff)
 		self.type = l
 	return packet + payload
 
@@ -385,9 +385,9 @@ def protocol_frame(protocol, source='unicast', vlans = []):
 	pdu = pdu / info['load']
 
 	# Add Padding and return.
-	padding = 64 - len(pdu) + 4 #FCS
+	padding = 64 + (4 * len(vlans)) - len(pdu) + 4 #FCS
 	if padding > 0 :
-		pdu = pdu / Padding(load = '\0' * padding)
+		pdu = pdu / Raw('\0' * padding)
 
 	#Process PDU so length field is correctly calculated.
 	pdu = Ether(str(pdu))
