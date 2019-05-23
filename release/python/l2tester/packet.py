@@ -5,6 +5,7 @@ from scapy.packet import Packet, Raw, Padding, bind_layers, bind_bottom_up, bind
 from scapy.fields import IntField, BitField, ByteField
 from scapy.layers.l2 import Ether, Dot3, Dot1Q, LLC, SNAP, STP
 from scapy.layers.inet import IP, ICMP
+from scapy.layers.inet6 import IPv6
 from scapy.utils import checksum
 
 from interface import mac_address
@@ -130,20 +131,25 @@ class MPLS( Packet ):
 	def guess_payload_class(self, payload):
 		"""Implements guess_payload_class to identify MPLS packets with internal Ethernet header"""
 		# If bottom of stack is zero, the next layer is MPLS for sure.
-		if self.s == 0:
-			return MPLS
-		# If checksum is ok, then we have a correct IP header after MPLS labels.
-		elif checksum(payload[:20]) == 0:
-			return IP
-		# If checksum is nok, then we (almost) certainly have an Ethernet header after MPLS.
-		else:
-			return Ether
+		if len(payload) >= 1:
+			if self.s == 0:
+				return MPLS
 
-bind_layers(Ether, MPLS, type = 0x8847)
-bind_bottom_up (Ether, MPLS, type = 0x8848)
-bind_layers(Dot1Q, MPLS, type = 0x8847)
-bind_bottom_up(Dot1Q, MPLS, type = 0x8848)
-bind_top_down(MPLS, MPLS, s = 0)
+			ip_version = (payload[0] >> 4) & 0xF
+			if ip_version == 4:
+				return IP
+			elif ip_version == 6:
+				return IPv6
+			else:
+				return Ether
+
+		return Padding
+
+bind_layers(Ether, MPLS, type=0x8847)
+bind_bottom_up(Ether, MPLS, type=0x8848)
+bind_layers(Dot1Q, MPLS, type=0x8847)
+bind_bottom_up(Dot1Q, MPLS, type=0x8848)
+bind_top_down(MPLS, MPLS, s=0)
 
 ## Redefine IP summary ############################################################################
 
