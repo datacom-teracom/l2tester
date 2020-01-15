@@ -284,7 +284,7 @@ def l2_frame_from_to(source, destination, vlans = [], seq = 10, size = 64, patte
 
 ## Utility to create IP frames ####################################################################
 
-def l3_frame_from_to(ip_src, ip_dst, if_src, if_dst, vlans = [], dscp = 0, size = 64, pattern = '\0', framing = "Ethernet II", ttl = 64):
+def l3_frame_from_to(ip_src, ip_dst, if_src, if_dst, vlans = [], dscp = 0, size = 64, pattern = '\0', framing = "Ethernet II", ttl = 64, ip_proto=0):
 	""" Create a frame using interfaces MACs.
 	@param ip_src            Source IP address.
 	@param ip_dst            Destination IP address.
@@ -307,6 +307,7 @@ def l3_frame_from_to(ip_src, ip_dst, if_src, if_dst, vlans = [], dscp = 0, size 
 	                         * "Ethernet II" : Ethertype > 1535 and hold information about next layer.
 	                         * "802.3" : Ethertype <= 1500 represent payload length. Next header is LLC.
 	@param ttl               [optional] TTL value for the frame. Default is 64.
+	@param ip_proto          [optional] IP Protocol.
 	"""
 
 	frame = l2_frame_from_to(if_src, if_dst, vlans = vlans, seq = None, size = 0, framing = framing)
@@ -315,7 +316,7 @@ def l3_frame_from_to(ip_src, ip_dst, if_src, if_dst, vlans = [], dscp = 0, size 
 	# of the tos field. Therefore, we must trail with 2 zeros on the lsb side.
 	tos_val = dscp << 2
 
-	frame = frame / IP(dst = ip_dst, src = ip_src, tos = tos_val, ttl = ttl)
+	frame = frame / IP(dst = ip_dst, src = ip_src, tos = tos_val, ttl = ttl, proto=ip_proto)
 
 	return add_payload(frame, size, pattern)
 

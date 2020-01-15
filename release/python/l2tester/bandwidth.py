@@ -187,5 +187,6 @@ class Sender(l2tester.Sender):
 
 		if hasattr(self.packet, 'summary'):
 			logger.info(" * Data: %s (%d bytes)", self.packet.summary(), len(self.packet))
+			logger.info("{}".format(self.packet.display()))
 
 		l2tester.Sender.start(self)
