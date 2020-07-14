@@ -72,7 +72,7 @@ class Stream {
      * \brief Construct new Stream.
      * \param _filter             Filter that define this Stream. No filter means 'all packets'.
      */
-    explicit Stream(L2T::Filter* _filter = NULL);
+    explicit Stream(L2T::Filter *_filter = NULL);
 
     /**
      * \brief Destroy Stream. All stored Measures are also deleted.
@@ -83,7 +83,7 @@ class Stream {
      * \brief Get the last measure for this stream.
      * \return Return a pointer to last measure.
      */
-    const Measure* last_reading();
+    const Measure *last_reading();
 
     /**
      * \brief Iterate through stored readings.
@@ -97,7 +97,7 @@ class Stream {
      * \return Return a pointer to next measure. NULL if last one and not blocking or blocking and
      * timed out.
      */
-    const Measure* iterate_reading(int _start = 0, bool _block = true, uint32_t _timeout_ms = 0);
+    const Measure *iterate_reading(int _start = 0, bool _block = true, uint32_t _timeout_ms = 0);
 
    private:
     /**
@@ -107,21 +107,21 @@ class Stream {
      * interface.
      * \param _size          Size of the packet, without the 2 extra bytes.
      */
-    void count_packet(void* _packet, int _size);
+    void count_packet(void *_packet, int _size);
 
     /**
      * \brief Calculate instantaneous bandwidth and reset internal counters.
      * \param _timestamp_ms  Timestamp in ms since last measurement.
      */
-    void measure_bandwidth(const uint64_t& _timestamp_ms);
+    void measure_bandwidth(const uint64_t &_timestamp_ms);
 
     /**
      * \brief Clear packets and byte counters, remove all Measures.
      * \param _timestamp_ms  Current timestamp in ms based on CLOCK_MONOTONIC.
      */
-    void reset(const uint64_t& _timestamp_ms);
+    void reset(const uint64_t &_timestamp_ms);
 
-    Filter* filter; /**< Filter associated with this Stream. */
+    Filter *filter; /**< Filter associated with this Stream. */
 
     uint64_t counter_bytes;              /**< Number of bytes for current analysis. */
     uint64_t counter_packets;            /**< Number of packets for current analysis. */
@@ -159,13 +159,13 @@ class Monitor : protected L2T::Sniffer {
      *                         If NULL, the stream will consider all received packets.
      * \return Reference to created Stream.
      */
-    Stream* new_stream(L2T::Filter* _filter = NULL);
+    Stream *new_stream(L2T::Filter *_filter = NULL);
 
     /**
      * \brief Remove the Stream from internal list and delete it.
      * \param _stream          Pointer to the stream that should be deleted.
      */
-    void delete_stream(Stream* _stream);
+    void delete_stream(Stream *_stream);
 
     /**
      * \brief Start receive and measure threads.
@@ -191,11 +191,11 @@ class Monitor : protected L2T::Sniffer {
      * \param _size          Packet size.
      * \return Return true if packet process was successful, false otherwise.
      */
-    virtual bool received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
+    virtual bool received_packet(uint32_t _iface, uint32_t _filter, void *_packet,
                                  size_t _size) throw();
 
-    std::vector<Stream*> stream_list; /**< Vector of monitored streams. */
-    pthread_mutex_t stream_mutex;     /**< Mutex to protected stream list. */
+    std::vector<Stream *> stream_list; /**< Vector of monitored streams. */
+    pthread_mutex_t stream_mutex;      /**< Mutex to protected stream list. */
 
     Thread<Monitor> measure_thread; /**< Thread for measuring instantaneous bandwidth. */
     bool measure_stop;              /**< Flag to stop measuring process. */

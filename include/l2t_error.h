@@ -31,7 +31,7 @@ typedef enum {
  * \param _code              Code of the error.
  * \return String describing the error.
  */
-const char* l2t_error_explanation_get(en_l2t_error_t _code);
+const char *l2t_error_explanation_get(en_l2t_error_t _code);
 
 /*************************************************************************************************/
 

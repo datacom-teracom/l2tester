@@ -27,7 +27,7 @@ namespace L2T {
  * \brief Helper class to store a thread-safe iterable vector of pointers.
  */
 template <class T>
-class Iterable : protected std::vector<T*> {
+class Iterable : protected std::vector<T *> {
    public:
     /**
      * \brief Construct new Iterable list.
@@ -43,13 +43,13 @@ class Iterable : protected std::vector<T*> {
      * \brief Add a new result.
      * \param _pointer        Pointer to be stored.
      */
-    void push_back(T* _pointer);
+    void push_back(T *_pointer);
 
     /**
      * \brief Get last added entry.
      * \return Last added entry or NULL if empty.
      */
-    const T* back();
+    const T *back();
 
     /**
      * \brief Remove all entries deallocating all resources.
@@ -67,7 +67,7 @@ class Iterable : protected std::vector<T*> {
      * \return Return a copy of desired value. NULL if last one and not blocking or blocking and
      * timed out.
      */
-    const T* iterate(int _start = 0, bool _block = true, uint32_t _timeout_ms = 0);
+    const T *iterate(int _start = 0, bool _block = true, uint32_t _timeout_ms = 0);
 
    protected:
     uint32_t read_pos;        /**< Current reading position. */
@@ -80,8 +80,7 @@ class Iterable : protected std::vector<T*> {
  **************************************************************************************************/
 
 template <class T>
-Iterable<T>::Iterable()
-    : std::vector<T*>(), read_pos(0), read_cond(), mutex()
+Iterable<T>::Iterable() : std::vector<T *>(), read_pos(0), read_cond(), mutex()
 {
     ::pthread_mutex_init(&this->mutex, NULL);
     ::pthread_cond_init(&this->read_cond, NULL);
@@ -98,25 +97,25 @@ Iterable<T>::~Iterable()
 /*************************************************************************************************/
 
 template <class T>
-void Iterable<T>::push_back(T* _pointer)
+void Iterable<T>::push_back(T *_pointer)
 {
     ScopedLock lock(&this->mutex);
 
-    this->std::vector<T*>::push_back(_pointer);
+    this->std::vector<T *>::push_back(_pointer);
     ::pthread_cond_signal(&this->read_cond);
 }
 
 /*************************************************************************************************/
 
 template <class T>
-const T* Iterable<T>::back()
+const T *Iterable<T>::back()
 {
     ScopedLock lock(&this->mutex);
 
-    if (this->std::vector<T*>::empty()) {
+    if (this->std::vector<T *>::empty()) {
         return NULL;
     } else {
-        return this->std::vector<T*>::back();
+        return this->std::vector<T *>::back();
     }
 }
 
@@ -127,9 +126,9 @@ void Iterable<T>::clear()
 {
     ScopedLock lock(&this->mutex);
 
-    while (!this->std::vector<T*>::empty()) {
-        delete this->std::vector<T*>::back();
-        this->std::vector<T*>::pop_back();
+    while (!this->std::vector<T *>::empty()) {
+        delete this->std::vector<T *>::back();
+        this->std::vector<T *>::pop_back();
     }
     this->read_pos = 0;
 }
@@ -137,14 +136,14 @@ void Iterable<T>::clear()
 /*************************************************************************************************/
 
 template <class T>
-const T* Iterable<T>::iterate(int _start, bool _block, uint32_t _timeout_ms)
+const T *Iterable<T>::iterate(int _start, bool _block, uint32_t _timeout_ms)
 {
     ScopedLock lock(&this->mutex);
 
     if (_start == 1) {
         this->read_pos = 0;
     } else if (_start == -1) {
-        this->read_pos = this->std::vector<T*>::size();
+        this->read_pos = this->std::vector<T *>::size();
     }
 
     if (_block) {
@@ -158,7 +157,7 @@ const T* Iterable<T>::iterate(int _start, bool _block, uint32_t _timeout_ms)
             wait_until.tv_sec += nsec / 1000000000LL;
         }
 
-        while (this->read_pos >= this->std::vector<T*>::size() && rc == 0) {
+        while (this->read_pos >= this->std::vector<T *>::size() && rc == 0) {
             if (_timeout_ms > 0) {
                 rc = pthread_cond_timedwait(&this->read_cond, &this->mutex, &wait_until);
             } else {
@@ -167,12 +166,12 @@ const T* Iterable<T>::iterate(int _start, bool _block, uint32_t _timeout_ms)
         }
 
         if (rc == 0) {
-            return this->std::vector<T*>::operator[](this->read_pos++);
+            return this->std::vector<T *>::operator[](this->read_pos++);
         } else {
             return NULL;
         }
-    } else if (this->read_pos < this->std::vector<T*>::size()) {
-        return this->std::vector<T*>::operator[](this->read_pos++);
+    } else if (this->read_pos < this->std::vector<T *>::size()) {
+        return this->std::vector<T *>::operator[](this->read_pos++);
     } else {
         return NULL;
     }

@@ -2,7 +2,11 @@
 
 # NOTE: readline is only available in UNIX platforms, but as l2tester works only for Linux,
 #       it should not be a problem
-import readline, os, atexit, rlcompleter, code
+import readline
+import os
+import atexit
+import rlcompleter
+import code
 from optparse import OptionParser
 
 import l2tester
@@ -24,7 +28,7 @@ import scapy.config
 history_path = os.path.expanduser("~/.shark_history")
 
 if os.path.exists(history_path):
-	readline.read_history_file(history_path)
+    readline.read_history_file(history_path)
 
 # Add tab completion
 atexit.register(lambda path=history_path: readline.write_history_file(path))
@@ -35,77 +39,82 @@ scapy.config.conf.color_theme = ColorOnBlackTheme()
 
 ## Receiver thread ##################################################################################
 
+
 class Receiver(l2tester.Sniffer):
-	""" Define basic sniffer that print all received packets.
-	"""
+    """ Define basic sniffer that print all received packets.
+    """
 
-	def __init__(self, interfaces, hexdump=False):
-		""" Init receiver.
-		@param interfaces    List of interfaces that should be monitored.
-		@param hexdump       True to enable hexdumping for each received packet, False [default] to disable.
-		"""
-		l2tester.Sniffer.__init__(self, 1000)
-		self.add_interfaces(interfaces)
-		self.add_filter()
-		self.names = interfaces
-		self.hexdump_enabled = hexdump
+    def __init__(self, interfaces, hexdump=False):
+        """ Init receiver.
+        @param interfaces    List of interfaces that should be monitored.
+        @param hexdump       True to enable hexdumping for each received packet, False [default] to disable.
+        """
+        l2tester.Sniffer.__init__(self, 1000)
+        self.add_interfaces(interfaces)
+        self.add_filter()
+        self.names = interfaces
+        self.hexdump_enabled = hexdump
 
-	def received_packet(self, iface, filter, packet):
-		""" Called for each received frame.
-		@param iface         Index of interface that received the packet.
-		@param filter        Index of the filter that matched the packet.
-		@param packet        Packet data.
-		"""
-		print "\033[1m[%s]\033[0m %s \033[2m(%d bytes)\033[0m" % (self.names[iface], Ether(packet).summary(), len(packet) + 4)
-		if self.hexdump_enabled:
-			hexdump(packet)
-		return True
+    def received_packet(self, iface, filter, packet):
+        """ Called for each received frame.
+        @param iface         Index of interface that received the packet.
+        @param filter        Index of the filter that matched the packet.
+        @param packet        Packet data.
+        """
+        print "\033[1m[%s]\033[0m %s \033[2m(%d bytes)\033[0m" % (
+            self.names[iface], Ether(packet).summary(), len(packet) + 4)
+        if self.hexdump_enabled:
+            hexdump(packet)
+        return True
 
-	def hexdump_set(self, enable):
-		""" Enable or Disable hex dump for each packet.
-		@param enable        True to enable, False to disable.
-		"""
-		self.hexdump_enabled = enable
+    def hexdump_set(self, enable):
+        """ Enable or Disable hex dump for each packet.
+        @param enable        True to enable, False to disable.
+        """
+        self.hexdump_enabled = enable
 
 ## Utility functions ################################################################################
 
+
 def learn():
-	for iface in map(get_interface, iface_list):
-		frame = l2_frame_from_to(iface.mac_address, 'broadcast')
-		iface.send(frame)
+    for iface in map(get_interface, iface_list):
+        frame = l2_frame_from_to(iface.mac_address, 'broadcast')
+        iface.send(frame)
 
 ## Main ##############################################################################################
 
+
 if __name__ == "__main__":
 
-	parser = OptionParser(usage="%prog [-d] ethX ethY ...")
+    parser = OptionParser(usage="%prog [-d] ethX ethY ...")
 
-	parser.add_option("-d", "--hexdump",
-		help="Print the hex dump for each received packet.", default=False,
-		action="store_true", dest="hexdump")
+    parser.add_option("-d", "--hexdump",
+                      help="Print the hex dump for each received packet.", default=False,
+                      action="store_true", dest="hexdump")
 
-	(options, iface_list) = parser.parse_args()
+    (options, iface_list) = parser.parse_args()
 
-	if not iface_list:
-		banner = "***************************************************************************************\n" \
-			" [Warning] Monitoring no interfaces!\n" \
-			"    Usage: shark [-d] ethX ethY ...\n" \
-			"***************************************************************************************"
-	else:
-		banner = "***************************************************************************************\n" \
-			" Welcome to Shark! Monitoring interfaces: {0}\n" \
-			"***************************************************************************************".format(", ".join(iface_list))
+    if not iface_list:
+        banner = "***************************************************************************************\n" \
+                " [Warning] Monitoring no interfaces!\n" \
+                "    Usage: shark [-d] ethX ethY ...\n" \
+                "***************************************************************************************"
+    else:
+        banner = "***************************************************************************************\n" \
+                " Welcome to Shark! Monitoring interfaces: {0}\n" \
+                "***************************************************************************************".format(
+                    ", ".join(iface_list))
 
-		# Add to globals to ease access to interfaces.
-		for iface_name in iface_list:
-			globals()[iface_name] = get_interface(iface_name)
+        # Add to globals to ease access to interfaces.
+        for iface_name in iface_list:
+            globals()[iface_name] = get_interface(iface_name)
 
-		receiver = Receiver(iface_list, options.hexdump)
-		receiver.start()
+        receiver = Receiver(iface_list, options.hexdump)
+        receiver.start()
 
-	# Start interactive mode
-	code.interact(banner=banner, local=globals())
+    # Start interactive mode
+    code.interact(banner=banner, local=globals())
 
-	# Stop receiver and delete interfaces
-	receiver.stop()
-	delete_interfaces()
+    # Stop receiver and delete interfaces
+    receiver.stop()
+    delete_interfaces()

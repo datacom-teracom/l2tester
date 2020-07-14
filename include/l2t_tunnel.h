@@ -26,13 +26,13 @@ class Tunnel : protected Sniffer {
      * \param _first         The first interface. Ex: "eth0"
      * \param _second        The second interface. Ex: "eth1"
      */
-    Tunnel(const std::string& _iface0, const std::string& _iface1) throw(L2T::Exception);
+    Tunnel(const std::string &_iface0, const std::string &_iface1) throw(L2T::Exception);
 
     /**
      * \brief Configure filter used to select traffic to be forwarded.
      * \param _filter        Filter to be used. Default: Match all.
      */
-    void set_filter(Filter* _filter = NULL);
+    void set_filter(Filter *_filter = NULL);
 
     /**
      * \brief Used to prevent traffic arriving in interfaces from being forwarded.
@@ -52,11 +52,11 @@ class Tunnel : protected Sniffer {
      * \param _size          Packet size.
      * \return Always return true.
      */
-    virtual bool received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
+    virtual bool received_packet(uint32_t _iface, uint32_t _filter, void *_packet,
                                  size_t _size) throw();
 
-    bool should_drop
-        [2]; /**< Flags to indicate if packets arriving in interfaces should be dropped. */
+    bool should_drop[2]; /**< Flags to indicate if packets arriving in interfaces should be dropped.
+                          */
     int32_t iface_dst[2]; /**< Destination interface for each receiving interface. */
 };
 

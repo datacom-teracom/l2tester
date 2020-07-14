@@ -31,7 +31,7 @@ class Thread {
      * \param _object        Pointer to instance with method to be executed.
      * \param _loop          Pointer to method that will be executed as a thread.
      */
-    Thread(T* _object, void (T::*_loop)()) : id(0), object(_object), loop(_loop), running(false)
+    Thread(T *_object, void (T::*_loop)()) : id(0), object(_object), loop(_loop), running(false)
     {
     }
 
@@ -43,7 +43,7 @@ class Thread {
         if (this->running) {
             throw Exception(L2T_ERROR_INVALID_OPERATION, "Thread is already running.");
         }
-        if (int rc = ::pthread_create(&this->id, NULL, execute_loop, (void*)this) != 0) {
+        if (int rc = ::pthread_create(&this->id, NULL, execute_loop, (void *)this) != 0) {
             L2T_ERROR << "Thread creation failed with error " << Errno(rc);
             throw Exception(L2T_ERROR_GENERIC, "Can't start thread loop.");
         }
@@ -79,9 +79,9 @@ class Thread {
      * \param _arg           Reference to this object.
      * \return NULL
      */
-    static void* execute_loop(void* _arg)
+    static void *execute_loop(void *_arg)
     {
-        Thread<T>* thread = (Thread<T>*)_arg;
+        Thread<T> *thread = (Thread<T> *)_arg;
         thread->running = true;
         (thread->object->*thread->loop)();
         thread->running = false;
@@ -89,7 +89,7 @@ class Thread {
     }
 
     pthread_t id;      /**< The thread ID. */
-    T* object;         /**< Pointer to the object which has the method to be executed. */
+    T *object;         /**< Pointer to the object which has the method to be executed. */
     void (T::*loop)(); /**< Pointer to the method to be executed. */
     bool running;      /**< Used to verify if this thread is currently running. */
 };

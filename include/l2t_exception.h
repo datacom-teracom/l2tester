@@ -29,7 +29,7 @@ class Exception : public std::exception {
      * \param _code          Error code defining the nature of the exception.
      * \param _detail        Detailed information about exception.
      */
-    Exception(en_l2t_error_t _code, const std::string& _detail = "");
+    Exception(en_l2t_error_t _code, const std::string &_detail = "");
 
     /**
      * \brief Destroy Exception.
@@ -42,17 +42,17 @@ class Exception : public std::exception {
      * \brief Return string describing the exception.
      * \return The exception explanation.
      */
-    const char* what() const throw();
+    const char *what() const throw();
 
     /**
      * \brief Overloads comparison operator == to ease error checking.
      */
-    bool operator==(const int& _code) const;
+    bool operator==(const int &_code) const;
 
     /**
      * \brief Overloads comparison operator != to ease error checking.
      */
-    bool operator!=(const int& _code) const;
+    bool operator!=(const int &_code) const;
 
    protected:
     int error_code;          /**< Internal error code. */

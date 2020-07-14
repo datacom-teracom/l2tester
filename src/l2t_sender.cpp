@@ -48,7 +48,7 @@ Action::Action()
 
 /*************************************************************************************************/
 
-Action::Action(const Action& _other)
+Action::Action(const Action &_other)
     : byte(_other.byte),
       mask(_other.mask),
       type(_other.type),
@@ -100,7 +100,7 @@ Action::~Action()
 
 /*************************************************************************************************/
 
-void Action::chain_action(Action* _another, ChainMode _mode, uint32_t _period) throw(L2T::Exception)
+void Action::chain_action(Action *_another, ChainMode _mode, uint32_t _period) throw(L2T::Exception)
 {
     switch (_mode) {
         case ACTION_CHAIN_UNCONDITIONAL: {
@@ -132,16 +132,18 @@ void Action::apply()
     switch (this->type) {
         case Action::ACTION_INCREMENT: {
             this->current = this->mask & (this->current + this->step);
-            if (this->custom_range && (this->current > this->range_last * this->step
-                                       || this->current < this->range_first * this->step)) {
+            if (this->custom_range &&
+                (this->current > this->range_last * this->step ||
+                 this->current < this->range_first * this->step)) {
                 this->current = this->range_first * this->step;
             }
             break;
         }
         case Action::ACTION_DECREMENT: {
             this->current = this->mask & (this->current - this->step);
-            if (this->custom_range && (this->current > this->range_last * this->step
-                                       || this->current < this->range_first * this->step)) {
+            if (this->custom_range &&
+                (this->current > this->range_last * this->step ||
+                 this->current < this->range_first * this->step)) {
                 this->current = this->range_last * this->step;
             }
             break;
@@ -151,14 +153,14 @@ void Action::apply()
             this->current = dis(this->gen);
             this->current &= this->mask;
             if (this->custom_range) {
-                this->current = (this->current % ((this->custom_range) * this->step))
-                                + this->range_first * this->step;
+                this->current = (this->current % ((this->custom_range) * this->step)) +
+                    this->range_first * this->step;
             }
             break;
         }
         case Action::ACTION_IPV4_CHECKSUM: {
             uint64_t checksum = 0;
-            uint16_t* data = (uint16_t*)this->packet_pointer;
+            uint16_t *data = (uint16_t *)this->packet_pointer;
             /* Add bytes from IPv4 header in groups of 16 bits (represented by the letters A through
              *I)
              * except the 16 bits from the checksum itself.
@@ -191,9 +193,8 @@ void Action::apply()
              * Change to bit-endian and shift 48 bits to create valid [current]. It replace old
              * checksum
              * update_packet method is called. */
-            this->current
-                = (uint64_t)(htobe16(~((((checksum & 0xFFFF0000) >> 16) + checksum) & 0xFFFF)))
-                  << 48;
+            this->current =
+                (uint64_t)(htobe16(~((((checksum & 0xFFFF0000) >> 16) + checksum) & 0xFFFF))) << 48;
             break;
         }
     }
@@ -216,7 +217,7 @@ void Action::apply()
 
 /*************************************************************************************************/
 
-static std::ostream& operator<<(std::ostream& _out, const Action::Type& _type)
+static std::ostream &operator<<(std::ostream &_out, const Action::Type &_type)
 {
     switch (_type) {
         case Action::ACTION_RANDOMIZE:
@@ -240,8 +241,8 @@ static std::ostream& operator<<(std::ostream& _out, const Action::Type& _type)
 
 /*************************************************************************************************/
 
-void Action::compile(void* _packet, size_t _size,
-                     const std::string& _indentation) throw(L2T::Exception)
+void Action::compile(void *_packet, size_t _size,
+                     const std::string &_indentation) throw(L2T::Exception)
 {
     L2T_DEBUG << _indentation << "Compiling Action:";
 
@@ -282,7 +283,7 @@ void Action::compile(void* _packet, size_t _size,
     }
 
     this->packet_pointer = _packet;
-    this->packet_data = (uint64_t*)((uint8_t*)_packet + this->byte);
+    this->packet_data = (uint64_t *)((uint8_t *)_packet + this->byte);
     this->inverse_mask_be = htobe64(~this->mask);
 
     /* Compile chained actions. */
@@ -305,7 +306,7 @@ void Action::compile(void* _packet, size_t _size,
     this->gen.seed(this->seed);
 }
 
-void Action::validate(void* _packet, size_t _size) throw(L2T::Exception)
+void Action::validate(void *_packet, size_t _size) throw(L2T::Exception)
 {
     if (this->type == ACTION_IPV4_CHECKSUM) {
         if (this->byte < ETH_HLEN + 10 /* IPv4 minimum header length */) {
@@ -381,7 +382,7 @@ uint64_t Action::getActionMaskMaxRange() throw(L2T::Exception)
  ** L2T::Sender **
  **************************************************************************************************/
 
-Sender::Sender(const std::string& _interface, void* _packet, size_t _size) throw(L2T::Exception)
+Sender::Sender(const std::string &_interface, void *_packet, size_t _size) throw(L2T::Exception)
     : iface_name(_interface),
       packet_data(NULL),
       packet_size(_size),
@@ -450,8 +451,8 @@ void Sender::auto_bandwidth(uint32_t _bandwidth) throw(L2T::Exception)
         this->burst++;
         L2T_DEBUG << " - Trying with burst of " << this->burst << " packets.";
         long double packets_per_sec = (_bandwidth / 8.0L) / (this->packet_size + 4.0L);
-        this->sending_interval_ns
-            = (unsigned long long)(1000000000.0L * (long double)this->burst / packets_per_sec);
+        this->sending_interval_ns =
+            (unsigned long long)(1000000000.0L * (long double)this->burst / packets_per_sec);
         L2T_DEBUG << " - Got interval " << this->sending_interval_ns << ".";
     }
     this->bandwidth = _bandwidth;
@@ -488,7 +489,7 @@ void Sender::manual_bandwidth(uint32_t _burst, uint64_t _interval_ns) throw(L2T:
 
 /*************************************************************************************************/
 
-void Sender::set_action(Action* _action) throw(L2T::Exception)
+void Sender::set_action(Action *_action) throw(L2T::Exception)
 {
     ScopedLock lock(&this->action_mutex);
 
@@ -501,7 +502,7 @@ void Sender::set_action(Action* _action) throw(L2T::Exception)
         /* Make a copy of the action to avoid ownership problems with SWIG.
          * The parameter was probably allocated by SWIG so it can be deallocated any time by it. */
 
-        Action* new_action = _action == NULL ? new Action : new Action(*_action);
+        Action *new_action = _action == NULL ? new Action : new Action(*_action);
 
         try {
             new_action->compile(this->packet_data, this->packet_size);
@@ -562,8 +563,9 @@ void Sender::send_loop() throw()
     Interface interface(this->iface_name);
     this->packets_sent = 0x0ULL;
 
-    while (!this->send_stop && (!this->send_max_packets || this->packets_sent < this->send_max_packets)
-           && (!this->send_timeout_ms || waker.elapsed_ms(true) < this->send_timeout_ms)) {
+    while (!this->send_stop &&
+           (!this->send_max_packets || this->packets_sent < this->send_max_packets) &&
+           (!this->send_timeout_ms || waker.elapsed_ms(true) < this->send_timeout_ms)) {
         uint64_t interval_ns;
         uint32_t burst;
 
@@ -588,7 +590,7 @@ void Sender::send_loop() throw()
                 }
             }
         }
-        catch (Exception& e) {
+        catch (Exception &e) {
             L2T_ERROR << "Error sending packet.";
         }
 

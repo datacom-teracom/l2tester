@@ -16,7 +16,7 @@ namespace L2T {
 
 /*************************************************************************************************/
 
-Tunnel::Tunnel(const std::string& _iface0, const std::string& _iface1) throw(L2T::Exception)
+Tunnel::Tunnel(const std::string &_iface0, const std::string &_iface1) throw(L2T::Exception)
     : Sniffer(1000)
 {
     std::vector<std::string> ifaces;
@@ -39,7 +39,7 @@ Tunnel::Tunnel(const std::string& _iface0, const std::string& _iface1) throw(L2T
 
 /*************************************************************************************************/
 
-void Tunnel::set_filter(Filter* _filter)
+void Tunnel::set_filter(Filter *_filter)
 {
     /* We can't use Sniffer methods for adding/removing filter as we want to have
      * the filters locked during all procedure.
@@ -51,7 +51,7 @@ void Tunnel::set_filter(Filter* _filter)
     this->filter_list.pop_back();
 
     /* Add new one! */
-    Filter* new_filter = _filter == NULL ? new Filter() : new Filter(*_filter);
+    Filter *new_filter = _filter == NULL ? new Filter() : new Filter(*_filter);
     this->filter_list.push_back(new_filter);
 }
 
@@ -65,7 +65,7 @@ void Tunnel::drop_received(bool _iface0, bool _iface1)
 
 /*************************************************************************************************/
 
-bool Tunnel::received_packet(uint32_t _iface, uint32_t _filter, void* _packet, size_t _size) throw()
+bool Tunnel::received_packet(uint32_t _iface, uint32_t _filter, void *_packet, size_t _size) throw()
 {
     if (!this->should_drop[_iface]) {
         this->iface_list[this->iface_dst[_iface]]->send(_packet, _size);

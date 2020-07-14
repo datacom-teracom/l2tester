@@ -5,7 +5,7 @@ BASEDIR=$(shell pwd)
 BUILD_DIR=$(BASEDIR)/build
 INCLUDE_DIR=$(BASEDIR)/include
 SRC_DIR=$(BASEDIR)/src
-CFLAGS+=-Wall -Werror -I$(INCLUDE_DIR) -fPIC -D__LINUX_ -std=c++11
+CFLAGS+=-Wall -Wno-deprecated -Werror -I$(INCLUDE_DIR) -fPIC -D__LINUX_ -std=c++11
 LDFLAGS+=-lrt -lpthread
 
 all:

@@ -20,8 +20,8 @@ namespace L2T {
  ** L2T::SendAndCheck **
  **************************************************************************************************/
 
-SendAndCheck::SendAndCheck(const FrameMapping& _send_frames, const FrameMapping& _expected_frames,
-                           uint32_t _timeout_ms, Filter* _filter,
+SendAndCheck::SendAndCheck(const FrameMapping &_send_frames, const FrameMapping &_expected_frames,
+                           uint32_t _timeout_ms, Filter *_filter,
                            uint32_t _interval_ms) throw(L2T::Exception)
     : Sniffer(500) /* Add an extra 500 ms to receiving timeout. */
       ,
@@ -68,13 +68,13 @@ void SendAndCheck::run() throw(L2T::Exception)
     /* Send frames */
     FrameMapping::iterator send_iterator = this->send_frames.begin();
     while (send_iterator != this->send_frames.end()) {
-        const std::vector<std::string>& frame_list = send_iterator->second;
+        const std::vector<std::string> &frame_list = send_iterator->second;
         if (!frame_list.empty()) {
             Interface iface(send_iterator->first);
             uint32_t num_frames = frame_list.size();
             for (uint32_t frame_id = 0; frame_id < num_frames; frame_id++) {
-                const std::string& frame = frame_list[frame_id];
-                iface.send((void*)frame.c_str(), frame.size());
+                const std::string &frame = frame_list[frame_id];
+                iface.send((void *)frame.c_str(), frame.size());
                 timer.sleep_ms(this->interval_ms);
             }
         }
@@ -100,13 +100,13 @@ void SendAndCheck::run() throw(L2T::Exception)
 
 /*************************************************************************************************/
 
-bool SendAndCheck::received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
+bool SendAndCheck::received_packet(uint32_t _iface, uint32_t _filter, void *_packet,
                                    size_t _size) throw()
 {
-    std::string frame((const char*)_packet, _size);
+    std::string frame((const char *)_packet, _size);
     std::string if_name(this->iface_list[_iface]->get_name());
 
-    std::vector<std::string>& missed = this->missed_frames[if_name];
+    std::vector<std::string> &missed = this->missed_frames[if_name];
     std::vector<std::string>::iterator found = std::find(missed.begin(), missed.end(), frame);
 
     if (found != missed.end()) {

@@ -48,8 +48,8 @@ class SendAndCheck : protected Sniffer {
      * to
      *                             use increase this interval.
      */
-    SendAndCheck(const FrameMapping& _send_frames, const FrameMapping& _expected_frames,
-                 uint32_t _timeout_ms = 1000, Filter* _filter = NULL,
+    SendAndCheck(const FrameMapping &_send_frames, const FrameMapping &_expected_frames,
+                 uint32_t _timeout_ms = 1000, Filter *_filter = NULL,
                  uint32_t _interval_ms = 1) throw(L2T::Exception);
 
     /**
@@ -61,7 +61,7 @@ class SendAndCheck : protected Sniffer {
      * \brief Obtain frames received during test execution.
      * \return Return FrameMapping with received frames.
      */
-    const FrameMapping& get_received_frames()
+    const FrameMapping &get_received_frames()
     {
         return this->received_frames;
     }
@@ -71,7 +71,7 @@ class SendAndCheck : protected Sniffer {
      *        NOTE: Before running the test, all expected frames are considered missed.
      * \return Return FrameMapping with missed frames.
      */
-    const FrameMapping& get_missed_frames()
+    const FrameMapping &get_missed_frames()
     {
         return this->missed_frames;
     }
@@ -80,7 +80,7 @@ class SendAndCheck : protected Sniffer {
      * \brief Obtain frames that were not expected but were received during test execution.
      * \return Return FrameMapping with unexpected frames.
      */
-    const FrameMapping& get_unexpected_frames()
+    const FrameMapping &get_unexpected_frames()
     {
         return this->unexpected_frames;
     }
@@ -95,7 +95,7 @@ class SendAndCheck : protected Sniffer {
      * \return Return true if packet processing was successful, false otherwise.
      *         False will cause receive_loop to finish.
      */
-    bool received_packet(uint32_t _iface, uint32_t _filter, void* _packet, size_t _size) throw();
+    bool received_packet(uint32_t _iface, uint32_t _filter, void *_packet, size_t _size) throw();
 
    private:
     uint32_t receive_interval_ms; /**< For how long should we monitor sniffed interfaces. */

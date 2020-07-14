@@ -159,9 +159,9 @@ class Monitor : protected Sniffer, protected Sender {
      * \param _filter              Filter to be applied in incoming packets.
      *                             Default : Receive all packets.
      */
-    Monitor(const std::string& _src, const std::string& _dst, void* _packet, size_t _size,
-            uint32_t _packet_interval_ms = 10, Action* _action = NULL,
-            Filter* _filter = NULL) throw(L2T::Exception);
+    Monitor(const std::string &_src, const std::string &_dst, void *_packet, size_t _size,
+            uint32_t _packet_interval_ms = 10, Action *_action = NULL,
+            Filter *_filter = NULL) throw(L2T::Exception);
 
     /**
      * \brief Stop test if running and free packet memory.
@@ -196,13 +196,13 @@ class Monitor : protected Sniffer, protected Sender {
      * \return Return a pointer to next event. NULL if last one and not blocking or blocking and
      * timed out.
      */
-    const Event* iterate_event(int _start = 0, bool _block = true, uint32_t _timeout_ms = 0);
+    const Event *iterate_event(int _start = 0, bool _block = true, uint32_t _timeout_ms = 0);
 
     /**
      * \brief Get test statistics.
      * \param _stats         Pointer to struct that should be used.
      */
-    void get_statistics(Statistics* _stats);
+    void get_statistics(Statistics *_stats);
 
     /**
      * \brief Monitor internal timers.
@@ -219,7 +219,7 @@ class Monitor : protected Sniffer, protected Sender {
      * \return Return true if packet processing was successful, false otherwise.
      *         False will cause receive_loop to finish.
      */
-    virtual bool received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
+    virtual bool received_packet(uint32_t _iface, uint32_t _filter, void *_packet,
                                  size_t _size) throw();
 
     /**
@@ -267,7 +267,7 @@ class Monitor : protected Sniffer, protected Sender {
      * \param _size    Packet size.
      * \return true if ok, false otherwise
      */
-    bool verify_received_packet(void* _packet, size_t _size) throw();
+    bool verify_received_packet(void *_packet, size_t _size) throw();
 
     static const int max_delayed_packets = 16; /**< Maximum delay in number of packets. */
 
