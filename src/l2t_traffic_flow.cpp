@@ -55,9 +55,9 @@ const std::string Event::type_to_str(Type _type)
  ** L2T::TrafficFlow::Monitor **
  **************************************************************************************************/
 
-Monitor::Monitor(const std::string& _src, const std::string& _dst, void* _packet, size_t _size,
-                 uint32_t _packet_interval_ms, Action* _action,
-                 Filter* _filter) throw(L2T::Exception)
+Monitor::Monitor(const std::string &_src, const std::string &_dst, void *_packet, size_t _size,
+                 uint32_t _packet_interval_ms, Action *_action,
+                 Filter *_filter) throw(L2T::Exception)
     : Sniffer((this->max_delayed_packets + 2) * _packet_interval_ms),
       Sender(_src, _packet, _size),
       packet_seq_tx(0),
@@ -72,14 +72,14 @@ Monitor::Monitor(const std::string& _src, const std::string& _dst, void* _packet
       timers_stop(true),
       event_list()
 {
-    if (_action != NULL && _action->range_first != _action->range_last
-        && static_cast<int64_t>(_action->range_last - _action->range_first)
-           < this->max_delayed_packets) {
+    if (_action != NULL && _action->range_first != _action->range_last &&
+        static_cast<int64_t>(_action->range_last - _action->range_first) <
+            this->max_delayed_packets) {
         throw Exception(L2T_ERROR_INVALID_CONFIG, "Action with range too small.");
     }
 
     if (!_action) { /* Use default action. */
-        Action* default_action = new Action();
+        Action *default_action = new Action();
         this->set_action(default_action);
         delete default_action; /* Action was copied internally. */
     } else {                   /* Use user defined action. */
@@ -139,14 +139,14 @@ void Monitor::stop() throw(L2T::Exception)
 
 /*************************************************************************************************/
 
-const Event* Monitor::iterate_event(int _start, bool _block, uint32_t _timeout_ms)
+const Event *Monitor::iterate_event(int _start, bool _block, uint32_t _timeout_ms)
 {
     return this->event_list.iterate(_start, _block, _timeout_ms);
 }
 
 /*************************************************************************************************/
 
-void Monitor::get_statistics(Statistics* _stats)
+void Monitor::get_statistics(Statistics *_stats)
 {
     if (_stats == NULL) {
         L2T_ERROR << "Invalid Statistics passed to get_statistics.";
@@ -158,7 +158,7 @@ void Monitor::get_statistics(Statistics* _stats)
 
 /*************************************************************************************************/
 
-bool Monitor::received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
+bool Monitor::received_packet(uint32_t _iface, uint32_t _filter, void *_packet,
                               size_t _size) throw()
 {
     if (_iface == 0 || this->loop_detected_enabled) {
@@ -170,7 +170,7 @@ bool Monitor::received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
     try {
         return verify_received_packet(_packet, _size);
     }
-    catch (L2T::Exception& e) {
+    catch (L2T::Exception &e) {
         /* This won't happen in normal operation. This exception will only be raised if a foreign
          * packet
          * arrives in the middle of the test. If this might occur, please use an adequate filter to
@@ -340,9 +340,9 @@ void Monitor::timers_loop()
         }
 
         /* Treat traffic timer. */
-        if (this->traffic_started_enabled
-            && this->traffic_started_timer.elapsed_ms() > this->packet_interval_ms
-                                                          * this->max_delayed_packets) {
+        if (this->traffic_started_enabled &&
+            this->traffic_started_timer.elapsed_ms() >
+                this->packet_interval_ms * this->max_delayed_packets) {
             this->traffic_stopped_event();
         }
     }
@@ -350,7 +350,7 @@ void Monitor::timers_loop()
 
 /*************************************************************************************************/
 
-bool Monitor::verify_received_packet(void* _packet, size_t _size) throw()
+bool Monitor::verify_received_packet(void *_packet, size_t _size) throw()
 {
     uint64_t received = this->action->extract_id(_packet, _size);
 
@@ -368,14 +368,14 @@ bool Monitor::verify_received_packet(void* _packet, size_t _size) throw()
     }
 
     /* As we only keep track of the last [max_delayed_packets], update RX sequence if needed. */
-    if (static_cast<int64_t>(this->packet_seq_rx)
-        < static_cast<int64_t>(this->packet_seq_tx - this->max_delayed_packets)) {
+    if (static_cast<int64_t>(this->packet_seq_rx) <
+        static_cast<int64_t>(this->packet_seq_tx - this->max_delayed_packets)) {
         this->packet_seq_rx = this->packet_seq_tx - this->max_delayed_packets;
     }
 
     /* Search newer sent packets. We may have missed some packets. */
-    while ((this->packet_seq_rx <= this->packet_seq_tx)
-           && (this->packet_id_list[this->packet_seq_rx % this->max_delayed_packets] != received)) {
+    while ((this->packet_seq_rx <= this->packet_seq_tx) &&
+           (this->packet_id_list[this->packet_seq_rx % this->max_delayed_packets] != received)) {
         this->packet_seq_rx++;
     }
 

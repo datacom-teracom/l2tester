@@ -19,7 +19,7 @@ Logger::LogLevel Logger::config_level = L2T_LOG_ERROR;
 
 /*************************************************************************************************/
 
-Logger::Logger(const LogLevel& _level, const char* _file, const char* _function, int _line)
+Logger::Logger(const LogLevel &_level, const char *_file, const char *_function, int _line)
     : level(_level), file(_file), function(_function), line(_line)
 {
 }
@@ -68,14 +68,14 @@ Logger::~Logger()
 
 /*************************************************************************************************/
 
-void Logger::config_log_level(const LogLevel& _level)
+void Logger::config_log_level(const LogLevel &_level)
 {
     Logger::config_level = _level;
 }
 
 /*************************************************************************************************/
 
-std::ostream& operator<<(std::ostream& _out, const Errno& _errno)
+std::ostream &operator<<(std::ostream &_out, const Errno &_errno)
 {
     char error_msg[200];
     _out << _errno.code << ": " << strerror_r(_errno.code, error_msg, sizeof(error_msg));
@@ -84,11 +84,11 @@ std::ostream& operator<<(std::ostream& _out, const Errno& _errno)
 
 /*************************************************************************************************/
 
-std::ostream& operator<<(std::ostream& _out, const ByteArray& _bytes)
+std::ostream &operator<<(std::ostream &_out, const ByteArray &_bytes)
 {
     _out << std::hex << std::setfill('0');
     for (unsigned int i = 0; i < _bytes.size; i++)
-        _out << std::setw(2) << (int)((unsigned char*)_bytes.data)[i] << " ";
+        _out << std::setw(2) << (int)((unsigned char *)_bytes.data)[i] << " ";
     return _out;
 }
 

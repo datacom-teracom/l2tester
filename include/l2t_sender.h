@@ -94,7 +94,7 @@ class Action {
      * \brief Create new action using default values or coping values from another action.
      * \param _other         Reference to another Action to be copied from.
      */
-    Action(const Action& _other);
+    Action(const Action &_other);
 
     /**
      * \brief Destroy action and recursively delete chained actions copies.
@@ -109,7 +109,7 @@ class Action {
      * action is executed.
      *                       Only used if mode is ACTION_CHAIN_PERIODICALLY.
      */
-    void chain_action(Action* _another, ChainMode _mode = ACTION_CHAIN_UNCONDITIONAL,
+    void chain_action(Action *_another, ChainMode _mode = ACTION_CHAIN_UNCONDITIONAL,
                       uint32_t _period = 0) throw(L2T::Exception);
 
     /**
@@ -128,8 +128,8 @@ class Action {
      * \param _size          Packet size.
      * \param _indentation   String used to indent chained actions logs.
      */
-    void compile(void* _packet, size_t _size,
-                 const std::string& _indentation = "") throw(L2T::Exception);
+    void compile(void *_packet, size_t _size,
+                 const std::string &_indentation = "") throw(L2T::Exception);
 
     /**
      * \brief Extract action result from foreign packet assuming this action would be applied to it.
@@ -137,13 +137,13 @@ class Action {
      * \param _size          Packet size.
      * \return Result as if this action was executed over this packet.
      */
-    inline uint64_t extract_id(void* _packet, size_t _size) throw(L2T::Exception)
+    inline uint64_t extract_id(void *_packet, size_t _size) throw(L2T::Exception)
     {
         if (this->byte + sizeof(uint64_t) >= _size) {
             throw Exception(L2T_ERROR_INVALID_OPERATION,
                             "Packet too small to have action extracted.");
         }
-        return *((uint64_t*)((uint8_t*)_packet + this->byte)) & htobe64(this->mask);
+        return *((uint64_t *)((uint8_t *)_packet + this->byte)) & htobe64(this->mask);
     }
 
     /**
@@ -177,8 +177,8 @@ class Action {
     bool copied;           /**< True if this instance was created by copy. */
     uint64_t custom_range; /**< Value of user defined range. */
 
-    uint64_t* packet_data; /**< Pointer to memory region that must be modified. */
-    void* packet_pointer;  /**< Pointer to complete packet. */
+    uint64_t *packet_data; /**< Pointer to memory region that must be modified. */
+    void *packet_pointer;  /**< Pointer to complete packet. */
 
     uint64_t step;    /**< Step for actions increment or decrement. Depends on mask. */
     uint64_t current; /**< Result of last action. */
@@ -186,8 +186,8 @@ class Action {
     uint64_t inverse_mask_be; /**< Inverse Mask in Big-Endian format. */
     uint64_t current_be;      /**< Result of last action in Big-Endian format. */
 
-    Action* chained_unconditional; /**< Unconditionally chained action. */
-    Action* chained_periodically;  /**< Periodically chained action. */
+    Action *chained_unconditional; /**< Unconditionally chained action. */
+    Action *chained_periodically;  /**< Periodically chained action. */
     uint32_t chained_period;       /**< Number of applies before chaining next action. */
 
     uint32_t apply_counter; /**< Internal counter to determine how many applies were done. */
@@ -200,7 +200,7 @@ class Action {
      * \param _packet Packet data.
      * \param _size Packet size.
      */
-    void validate(void* _packet, size_t _size) throw(L2T::Exception);
+    void validate(void *_packet, size_t _size) throw(L2T::Exception);
 
     /**
      * \brief Get the max range for action mask
@@ -223,7 +223,7 @@ class Sender {
      * \param _packet        Packet data to be sent.
      * \param _size          Size of the packet.
      */
-    Sender(const std::string& _interface, void* _packet, size_t _size) throw(L2T::Exception);
+    Sender(const std::string &_interface, void *_packet, size_t _size) throw(L2T::Exception);
 
     /**
      * \brief Destroy Sender and free packet memory and internal actions.
@@ -253,7 +253,7 @@ class Sender {
      *        new modifications.
      * \param _action        Action to be applied. Pass NULL to remove action.
      */
-    void set_action(Action* _action = NULL) throw(L2T::Exception);
+    void set_action(Action *_action = NULL) throw(L2T::Exception);
 
     /**
      * \brief Return current configured bandwidth.
@@ -310,7 +310,7 @@ class Sender {
     void check_running_conditions() throw(L2T::Exception);
 
     std::string iface_name; /**< Name of the sending interface. */
-    void* packet_data;      /**< Packet data. */
+    void *packet_data;      /**< Packet data. */
     size_t packet_size;     /**< Packet size. */
 
     uint32_t bandwidth;              /**< Actual bandwidth, measured in bits per second. */
@@ -318,7 +318,7 @@ class Sender {
     uint64_t sending_interval_ns;    /**< Interval between each burst in nanoseconds. */
     pthread_mutex_t bandwidth_mutex; /**< Can't change bandwidth while this stream is being used. */
 
-    Action* action; /**< Optional Action to be applied to the packet each time it's sent. */
+    Action *action; /**< Optional Action to be applied to the packet each time it's sent. */
     pthread_mutex_t action_mutex; /**< Can't change bandwidth while this stream is being used. */
 
     bool send_stop;             /**< Flag used to end sending thread. */

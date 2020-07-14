@@ -151,8 +151,8 @@ void Filter::match32bits(uint32_t _data, uint32_t _mask, uint16_t _byte) throw(L
     }
 
     /* Allocate memory */
-    mask = (uint32_t*) malloc(newLength * sizeof(uint32_t));
-    data = (uint32_t*) malloc(newLength * sizeof(uint32_t));
+    mask = (uint32_t *)malloc(newLength * sizeof(uint32_t));
+    data = (uint32_t *)malloc(newLength * sizeof(uint32_t));
     memset(mask, 0, newLength * sizeof(uint32_t));
     memset(data, 0, newLength * sizeof(uint32_t));
 
@@ -502,8 +502,8 @@ void Sniffer::remove_interfaces(std::vector<std::string> _interfaces) throw(L2T:
             Interface *iface = it->second;
             this->iface_map.erase(it);
 
-            std::vector<Interface *>::iterator pointer
-                = std::find(this->iface_list.begin(), this->iface_list.end(), iface);
+            std::vector<Interface *>::iterator pointer =
+                std::find(this->iface_list.begin(), this->iface_list.end(), iface);
             this->iface_list.erase(pointer);
 
             std::vector<int>::iterator socket = std::find(
@@ -551,8 +551,8 @@ void Sniffer::remove_filter(Filter *_filter) throw(L2T::Exception)
 
     this->is_configuring = true;
     ScopedLock lock(&this->filter_mutex);
-    std::vector<Filter *>::iterator it
-        = std::find(this->filter_list.begin(), this->filter_list.end(), _filter);
+    std::vector<Filter *>::iterator it =
+        std::find(this->filter_list.begin(), this->filter_list.end(), _filter);
     if (it != this->filter_list.end()) {
         /* Found desired Filter! Delete it! */
         L2T::Filter *filter = *it;
@@ -613,8 +613,8 @@ void Sniffer::metadataHandler(struct msghdr *msg, signed int *packet_size)
         unsigned int len;
         struct vlan_tag *tag;
 
-        if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct tpacket_auxdata))
-            || cmsg->cmsg_level != SOL_PACKET || cmsg->cmsg_type != PACKET_AUXDATA)
+        if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct tpacket_auxdata)) ||
+            cmsg->cmsg_level != SOL_PACKET || cmsg->cmsg_type != PACKET_AUXDATA)
             continue;
 
         aux = (struct tpacket_auxdata *)CMSG_DATA(cmsg);
@@ -622,8 +622,8 @@ void Sniffer::metadataHandler(struct msghdr *msg, signed int *packet_size)
             continue;
 
         // Smaller between buffers size (msg->msg_iov->iov_len) and packet size
-        len = *packet_size > (signed int)msg->msg_iov->iov_len ? msg->msg_iov->iov_len
-                                                               : *packet_size;
+        len =
+            *packet_size > (signed int)msg->msg_iov->iov_len ? msg->msg_iov->iov_len : *packet_size;
 
         if (len < 2 * ETH_ALEN)
             break;
@@ -645,8 +645,8 @@ void Sniffer::metadataHandler(struct msghdr *msg, signed int *packet_size)
 
         // If a VLAN was added and EtherType was 0x8100, the packet comes with no EtherType.
         // This lines fix it.
-        if (((uint8_t *)msg->msg_iov->iov_base)[12] == 0x00
-            && ((uint8_t *)msg->msg_iov->iov_base)[13] == 0x00) {
+        if (((uint8_t *)msg->msg_iov->iov_base)[12] == 0x00 &&
+            ((uint8_t *)msg->msg_iov->iov_base)[13] == 0x00) {
             ((uint8_t *)msg->msg_iov->iov_base)[12] = 0x81;
             ((uint8_t *)msg->msg_iov->iov_base)[13] = 0x00;
         }

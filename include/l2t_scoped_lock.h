@@ -25,7 +25,7 @@ class ScopedLock {
      * \brief Construct ScopedLock. Lock associated mutex.
      * \param _mutex         Associated mutex to be locked.
      */
-    explicit ScopedLock(pthread_mutex_t* _mutex) : mutex(_mutex)
+    explicit ScopedLock(pthread_mutex_t *_mutex) : mutex(_mutex)
     {
         ::pthread_mutex_lock(this->mutex);
     }
@@ -39,7 +39,7 @@ class ScopedLock {
     }
 
    private:
-    pthread_mutex_t* mutex; /**< Mutex protected by this instance. */
+    pthread_mutex_t *mutex; /**< Mutex protected by this instance. */
 };
 
 /*************************************************************************************************/

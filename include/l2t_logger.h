@@ -53,7 +53,7 @@ class Logger : public std::stringstream {
      * \param _function      Function, often __FUNCTION__
      * \param _line          Line of log, often __LINE__
      */
-    Logger(const LogLevel& _level, const char* _file, const char* _function, int _line);
+    Logger(const LogLevel &_level, const char *_file, const char *_function, int _line);
 
     /**
      * \brief Destroy StreamLog effectively logging the message.
@@ -63,7 +63,7 @@ class Logger : public std::stringstream {
     /**
      * \brief Return reference to itself. Necessary to work with an anonymous object.
      */
-    Logger& self()
+    Logger &self()
     {
         return *this;
     }
@@ -72,12 +72,12 @@ class Logger : public std::stringstream {
      * \brief Configure maximum log level that are displayed.
      * \param _level         Minimum log level to be output. Lower level messages are not printed.
      */
-    static void config_log_level(const LogLevel& _level);
+    static void config_log_level(const LogLevel &_level);
 
    protected:
     LogLevel level;       /**< Level of current message. */
-    const char* file;     /**< File where message was generated. */
-    const char* function; /**< Function where message was generated. */
+    const char *file;     /**< File where message was generated. */
+    const char *function; /**< Function where message was generated. */
     int line;             /**< Line where message was generated. */
 
     static LogLevel config_level; /**< Global configuration level. Only messages with level
@@ -105,18 +105,18 @@ struct Errno {
  * \brief Helper class to log byte streams.
  */
 struct ByteArray {
-    ByteArray(void* _data, size_t _size) : data(_data), size(_size)
+    ByteArray(void *_data, size_t _size) : data(_data), size(_size)
     {
     }
 
-    void* data;
+    void *data;
     size_t size;
 };
 
 /*************************************************************************************************/
 
-std::ostream& operator<<(std::ostream& _out, const Errno& _errno);
-std::ostream& operator<<(std::ostream& _out, const ByteArray& _bytes);
+std::ostream &operator<<(std::ostream &_out, const Errno &_errno);
+std::ostream &operator<<(std::ostream &_out, const ByteArray &_bytes);
 
 /*************************************************************************************************/
 

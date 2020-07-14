@@ -20,7 +20,7 @@ namespace Bandwidth {
  ** L2T::Bandwidth::Stream **
  **************************************************************************************************/
 
-Stream::Stream(L2T::Filter* _filter)
+Stream::Stream(L2T::Filter *_filter)
     : filter(_filter),
       counter_bytes(0ULL),
       counter_packets(0ULL),
@@ -42,21 +42,21 @@ Stream::~Stream()
 
 /*************************************************************************************************/
 
-const Measure* Stream::last_reading()
+const Measure *Stream::last_reading()
 {
     return this->measure_list.back();
 }
 
 /*************************************************************************************************/
 
-const Measure* Stream::iterate_reading(int _start, bool _block, uint32_t _timeout_ms)
+const Measure *Stream::iterate_reading(int _start, bool _block, uint32_t _timeout_ms)
 {
     return this->measure_list.iterate(_start, _block, _timeout_ms);
 }
 
 /*************************************************************************************************/
 
-void Stream::count_packet(void* _packet, int _size)
+void Stream::count_packet(void *_packet, int _size)
 {
     ::pthread_mutex_lock(&this->counter_mutex);
     this->counter_packets++;
@@ -68,7 +68,7 @@ void Stream::count_packet(void* _packet, int _size)
 
 /*************************************************************************************************/
 
-void Stream::measure_bandwidth(const uint64_t& _timestamp_ms)
+void Stream::measure_bandwidth(const uint64_t &_timestamp_ms)
 {
     /* Read counters and reset then! */
     ::pthread_mutex_lock(&this->counter_mutex);
@@ -100,7 +100,7 @@ void Stream::measure_bandwidth(const uint64_t& _timestamp_ms)
 
 /*************************************************************************************************/
 
-void Stream::reset(const uint64_t& _timestamp_ms)
+void Stream::reset(const uint64_t &_timestamp_ms)
 {
     ::pthread_mutex_lock(&this->counter_mutex);
     this->counter_bytes = 0;
@@ -152,15 +152,15 @@ Monitor::~Monitor()
 
 /*************************************************************************************************/
 
-Stream* Monitor::new_stream(L2T::Filter* _filter)
+Stream *Monitor::new_stream(L2T::Filter *_filter)
 {
     L2T_DEBUG << "Add new Stream to Bandwidth::Monitor.";
 
     ScopedLock lock(&this->stream_mutex);
 
     /* Add filter and associate with a new Stream. */
-    L2T::Filter* filter = this->add_filter(_filter);
-    Stream* new_stream = new Stream(filter);
+    L2T::Filter *filter = this->add_filter(_filter);
+    Stream *new_stream = new Stream(filter);
     new_stream->reset(this->timestamp_ms);
 
     this->stream_list.push_back(new_stream);
@@ -170,7 +170,7 @@ Stream* Monitor::new_stream(L2T::Filter* _filter)
 
 /*************************************************************************************************/
 
-void Monitor::delete_stream(Stream* _stream)
+void Monitor::delete_stream(Stream *_stream)
 {
     if (_stream == NULL) {
         L2T_ERROR << "Invalid Stream passed to delete_stream.";
@@ -179,12 +179,12 @@ void Monitor::delete_stream(Stream* _stream)
 
     ScopedLock lock(&this->stream_mutex);
 
-    std::vector<Stream*>::iterator it;
+    std::vector<Stream *>::iterator it;
     it = std::find(this->stream_list.begin(), this->stream_list.end(), _stream);
 
     if (it != this->stream_list.end()) {
         this->remove_filter((*it)->filter);
-        Stream* stream = *it;
+        Stream *stream = *it;
         this->stream_list.erase(it);
         delete stream;
     } else {
@@ -259,7 +259,7 @@ void Monitor::measure_loop() throw()
 
 /*************************************************************************************************/
 
-bool Monitor::received_packet(uint32_t _iface, uint32_t _filter, void* _packet,
+bool Monitor::received_packet(uint32_t _iface, uint32_t _filter, void *_packet,
                               size_t _size) throw()
 {
     ::pthread_mutex_lock(&this->stream_mutex);
