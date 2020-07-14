@@ -14,8 +14,8 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-## Mapping printing ################################################################################
 
+## Mapping printing ################################################################################
 
 class FrameCounter(dict):
     """ Convert a list of frames into a dictionary mapping { frame : num_occurences }.
@@ -32,19 +32,27 @@ class FrameCounter(dict):
             self[raw_frame] = self.get(raw_frame, 0) + 1
 
 
-def frame_mapping_to_str(mapping):
+def frame_mapping_to_str(mapping, raw=False):
     """ Return a representable string for the mapping { iface : [ frame_list ], ... }
     @param mapping           Dictionary of interfaces to frame list.
     """
-    return '\n'.join([
-        " {0:<9} : {1}".format(iface, '\n           : '.join([
-            "{0} ({1} bytes) [x{2}]".format(Ether(frame).summary(),
-                                            len(frame)+4, count)  # Add 4 bytes of FCS
-            for frame, count in FrameCounter(frames).iteritems()]))
-        for iface, frames in mapping.iteritems()])
+    if raw:
+        return '\n'.join([
+            " {0:<9} : {1}".format(iface, '\n           : '.join([
+                "{0} ({1} bytes) [x{2}]".format(str(frame).encode("HEX"),
+                                                len(frame) + 4, count)  # Add 4 bytes of FCS
+                for frame, count in FrameCounter(frames).iteritems()]))
+            for iface, frames in mapping.iteritems()])
+    else:
+        return '\n'.join([
+            " {0:<9} : {1}".format(iface, '\n           : '.join([
+                "{0} ({1} bytes) [x{2}]".format(Ether(frame).summary(),
+                                                len(frame) + 4, count)  # Add 4 bytes of FCS
+                for frame, count in FrameCounter(frames).iteritems()]))
+            for iface, frames in mapping.iteritems()])
 
 
-## Send frames #######################################################################################
+## Send frames #####################################################################################
 
 def send_frame(frame_mapping):
     """ Send multiples frames from multiples interfaces.
@@ -62,15 +70,17 @@ def send_frame(frame_mapping):
             time.sleep(0.001)
 
 
-## Send And Check frames #############################################################################
+## Send And Check frames ###########################################################################
 
-def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False, timeout=1.0, do_not_log_error_on_error=False):
+def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False, timeout=1.0,
+                   do_not_log_error_on_error=False, print_raw_packets=False):
     """ Send frames from PC interfaces and monitor interfaces for received frames.
     @param send_frames                Dictionary containing a map of { iface : [ frame_list ], ... }
     @param expected_frames            Dictionary containing a map of { iface : [ frame_list ], ... }
     @param ignore_unexpected_frames   Inform if unexpected frames must be ignored or not.
     @param timeout                    Time spent for interface monitoring.
     @param do_not_log_error_on_error  Do not log as error whenever an error occurs.
+    @param print_raw_packets          Log packets as raw hex string
 
     This function is intended to do a frame-by-frame analysis with full frame match.
     The first parameter specify what frames should be sent, and from which interfaces,
@@ -78,8 +88,10 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
     To monitor an interface that should not receive a frame, pass to it an empty list.
 
     Ex:
-    frameA = Ether(src='10:00:01:02:03:04', dst='FF:FF:FF:FF:FF:FF') / Dot1Q(vlan=10) / Raw(load=100*'\0')
-    frameB = Ether(src='10:00:01:02:03:04', dst='FF:FF:FF:FF:FF:FF') / Dot1Q(vlan=20) / Raw(load=100*'\0')
+    frameA = Ether(src='10:00:01:02:03:04', dst='FF:FF:FF:FF:FF:FF') / Dot1Q(vlan=10) /
+             Raw(load=100*'\0')
+    frameB = Ether(src='10:00:01:02:03:04', dst='FF:FF:FF:FF:FF:FF') / Dot1Q(vlan=20) /
+             Raw(load=100*'\0')
 
     send_and_check(
         send_frames = {
@@ -89,14 +101,13 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
             'eth1' : 10 * [frameA]
             'eth2  : 13 * [frameB] })
 
-    The code above will send 10 frameA and 3 frameB from eth0. Meanwhile, it will monitor interfaces eth0,
-    eth1 and eth2. It will assure no frames were received in eth0, that 10 frameA were received in eth1
-    and 13 frameB in eth2.
-
+    The code above will send 10 frameA and 3 frameB from eth0. Meanwhile, it will monitor interfaces
+    eth0, eth1 and eth2. It will assure no frames were received in eth0, that 10 frameA were
+    received in eth1 and 13 frameB in eth2.
     """
 
     send_checker = SendAndCheck(send_frames, expected_frames, int(timeout * 1000))
-    logger.info("Sending frames:\n%s", frame_mapping_to_str(send_frames))
+    logger.info("Sending frames:\n%s", frame_mapping_to_str(send_frames, raw=print_raw_packets))
     send_checker.run()
 
     missed_frames = send_checker.get_missed_frames()
@@ -109,16 +120,17 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
         if not received_frames:
             logger.info("No frames received, as expected.")
         else:
-            logger.info("All expected frames received:\n%s", frame_mapping_to_str(received_frames))
+            logger.info("All expected frames received:\n%s",
+                        frame_mapping_to_str(received_frames, raw=print_raw_packets))
     else:
         num_received = reduce(lambda total, list: total+len(list), received_frames.values(), 0)
         num_missed = reduce(lambda total, list: total+len(list), missed_frames.values(), 0)
         num_expected = num_received + num_missed
         if received_frames:
             logger.info("Received %d of %d expected frames:\n%s", num_received,
-                        num_expected, frame_mapping_to_str(received_frames))
+                        num_expected, frame_mapping_to_str(received_frames, raw=print_raw_packets))
         err_msg_missed = "Missed {0} expected frames:\n{1}".format(
-            num_missed, frame_mapping_to_str(missed_frames))
+            num_missed, frame_mapping_to_str(missed_frames, raw=print_raw_packets))
         if do_not_log_error_on_error:
             logger.info(err_msg_missed)
         else:
@@ -128,7 +140,7 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
     if (unexpected_frames and not ignore_unexpected_frames):
         num_unexpected = reduce(lambda total, list: total+len(list), unexpected_frames.values(), 0)
         err_msg_unexpected = "Received {0} unexpected frames:\n{1}".format(
-            num_unexpected, frame_mapping_to_str(unexpected_frames))
+            num_unexpected, frame_mapping_to_str(unexpected_frames, raw=print_raw_packets))
         if do_not_log_error_on_error:
             logger.info(err_msg_unexpected)
         else:
@@ -138,8 +150,8 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
     if not err_msg == "":
         raise AssertionError(err_msg)
 
-## Send from one interface to another ################################################################
 
+## Send from one interface to another ##############################################################
 
 def send_from_to(if_src, if_dst, *vlans):
     """ Send a frame using interfaces MACs.
