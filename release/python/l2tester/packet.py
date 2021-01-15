@@ -359,6 +359,7 @@ pdu_info = {
         'udld': {'mac': '01:00:0c:cc:cc:cc', 'load': LLC() / SNAP(OUI=0x00000C, code=0x0111) / Raw('\0' * 60)},
         'vtp': {'mac': '01:00:0c:cc:cc:cc', 'load': LLC() / SNAP(OUI=0x00000C, code=0x2003) / Raw('\0' * 77)},
         'pvst': {'mac': '01:00:0c:cc:cc:cd', 'load': LLC() / SNAP(OUI=0x00000C, code=0x010b) / STP()},
+        'old_pvst': {'mac': '01:00:0c:cc:cc:cd', 'load': LLC(dsap=0x42, ssap=0x42, ctrl=0x03) / Raw('\x01\x0b') / STP()},
         'dtp': {'mac': '01:00:0c:cc:cc:cd', 'load': LLC() / SNAP(OUI=0x00000C, code=0x2004) / Raw('\0' * 31)},
         'gvrp': {'mac': '01:80:c2:00:00:21', 'load': LLC(dsap=0x42, ssap=0x42, ctrl=0x03) / Raw('\x00\x01') / Raw('\0' * 41)},
         'gmrp': {'mac': '01:80:c2:00:00:20', 'load': LLC(dsap=0x42, ssap=0x42, ctrl=0x03) / Raw('\x00\x01') / Raw('\0' * 41)},
@@ -372,7 +373,7 @@ def protocol_frame(protocol, source='unicast', vlans=[]):
     """ Create a frame that has the minimum fields to be recognized as a determined protocol.
         It's not intended to be a valid PDU, only to be seen as one by the switch filter.
     @param protocol          Protocol name. Valid options are:
-                             * stp, lldp, lacp, marker, oam, lbd, cdp, pagp, udld, vtp, pvst, dtp, gvrp, gmrp, dot1x
+                             * stp, lldp, lacp, marker, oam, lbd, cdp, pagp, udld, vtp, pvst, old_pvst, dtp, gvrp, gmrp, dot1x
     @param source            Name of the source interface, or source MAC address.
                              * 'unicast' to use a random unicast address as source MAC.
     @param vlans             [optional] List of VLAN Tags.
