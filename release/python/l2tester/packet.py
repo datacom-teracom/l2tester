@@ -9,6 +9,7 @@ from scapy.layers.inet6 import IPv6
 from scapy.utils import checksum
 
 from interface import mac_address
+from ipaddress import ip_address
 
 ## Class MAC Address ##############################################################################
 
@@ -339,7 +340,13 @@ def l3_frame_from_to(ip_src, ip_dst, if_src, if_dst, vlans=[], dscp=0, size=64, 
     # of the tos field. Therefore, we must trail with 2 zeros on the lsb side.
     tos_val = dscp << 2
 
-    frame = frame / IP(dst=ip_dst, src=ip_src, tos=tos_val, ttl=ttl, proto=ip_proto)
+    ip_version = ip_address(ip_dst).version
+    if ip_version == 4:
+        frame = frame / IP(dst=ip_dst, src=ip_src, tos=tos_val, ttl=ttl, proto=ip_proto)
+    elif ip_version == 6:
+        frame = frame / IPv6(dst=ip_dst, src=ip_src, tc=tos_val, hlim=ttl, nh=ip_proto)
+    else:
+        raise Assertion("Invalid IP protool version")
 
     return add_payload(frame, size, pattern)
 
