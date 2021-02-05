@@ -340,7 +340,12 @@ def l3_frame_from_to(ip_src, ip_dst, if_src, if_dst, vlans=[], dscp=0, size=64, 
     # of the tos field. Therefore, we must trail with 2 zeros on the lsb side.
     tos_val = dscp << 2
 
-    ip_version = ip_address(ip_dst).version
+    if type(ip_dst) != unicode:
+        ip_utf = unicode(ip_dst, "utf-8")
+    else:
+        ip_utf = ip_dst
+
+    ip_version = ip_address(ip_utf).version
     if ip_version == 4:
         frame = frame / IP(dst=ip_dst, src=ip_src, tos=tos_val, ttl=ttl, proto=ip_proto)
     elif ip_version == 6:
