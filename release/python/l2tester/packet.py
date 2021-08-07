@@ -8,7 +8,7 @@ from scapy.layers.inet import IP, ICMP
 from scapy.layers.inet6 import IPv6
 from scapy.utils import checksum
 
-from interface import mac_address
+from .interface import mac_address
 from ipaddress import ip_address
 
 ## Class MAC Address ##############################################################################
