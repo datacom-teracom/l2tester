@@ -201,7 +201,7 @@ class QRxStream(QObject):
     def add_stream(self, add):
 
         if add:
-            print "Adding Stream..."
+            print("Adding Stream...")
             try:
                 self.instance = eval("self.sniffer.instance.new_stream(%s)" %
                                      self.filter_args.text())
@@ -212,7 +212,7 @@ class QRxStream(QObject):
                 QMessageBox.critical(None, QString("Can't create RxStream"), QString(str(exp)))
 
         else:
-            print "Removing Stream..."
+            print("Removing Stream...")
             self.sniffer.instance.delete_stream(self.instance)
             self.instance = None
             self.add.setText('Add')
@@ -257,11 +257,11 @@ class QMonitor(QGridLayout):
     def create_sniffer(self, create):
 
         if create:
-            print "Creating Monitor..."
+            print("Creating Monitor...")
             try:
                 iface_list = map(lambda i: i.strip(), str(self.ifaces.text()).split(','))
-                print " * interfaces: " + str(iface_list)
-                print " * interval: " + str(self.interval.text())
+                print(" * interfaces: " + str(iface_list))
+                print(" * interval: " + str(self.interval.text()))
                 self.instance = Monitor(iface_list, float(self.interval.text()))
                 self.create.setText('Destroy')
                 self.emit(SIGNAL("created(bool)"), True)
@@ -271,7 +271,7 @@ class QMonitor(QGridLayout):
                 QMessageBox.critical(None, QString("Can't create Monitor"), QString(str(exp)))
 
         else:
-            print "Destroy Monitor..."
+            print("Destroy Monitor...")
             self.instance.stop()
             self.instance = None
 
@@ -283,7 +283,7 @@ class QMonitor(QGridLayout):
     def start_sniffer(self, start):
 
         if start:
-            print "Starting Monitor..."
+            print("Starting Monitor...")
             if self.instance:
                 self.instance.start()
                 self.start.setText('Stop')
@@ -292,7 +292,7 @@ class QMonitor(QGridLayout):
                 self.start.setChecked(False)
 
         else:
-            print "Stopping Monitor..."
+            print("Stopping Monitor...")
             self.instance.stop()
             self.start.setText('Start')
             self.emit(SIGNAL("started(bool)"), False)
@@ -364,7 +364,7 @@ class QSender(QObject):
     def start_bandwidth(self, start):
 
         if start:
-            print "Starting Bandwidth from interface " + self.iface.text() + " ..."
+            print("Starting Bandwidth from interface " + self.iface.text() + " ...")
             try:
                 self.packet = eval(str(self.frame.text()))
                 self.instance = Sender(str(self.iface.text()), self.packet)
@@ -379,7 +379,7 @@ class QSender(QObject):
                 QMessageBox.critical(None, QString("Can't start Sender"), QString(str(exp)))
         else:
             self.start.setText('Start')
-            print "Stopping Bandwidth..."
+            print("Stopping Bandwidth...")
             self.instance.stop()
             self.instance = None
 
