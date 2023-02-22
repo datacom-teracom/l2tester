@@ -706,7 +706,7 @@ void Sniffer::receive_loop() throw()
                     struct ::sockaddr_ll address;
                     socklen_t address_len = sizeof(address);
 
-                    uint8_t buffer[1600];
+                    uint8_t buffer[10000];
 
                     msg.msg_name = &address;
                     msg.msg_namelen = address_len;
