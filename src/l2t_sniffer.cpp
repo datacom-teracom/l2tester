@@ -151,10 +151,8 @@ void Filter::match32bits(uint32_t _data, uint32_t _mask, uint16_t _byte) throw(L
     }
 
     /* Allocate memory */
-    mask = (uint32_t *)malloc(newLength * sizeof(uint32_t));
-    data = (uint32_t *)malloc(newLength * sizeof(uint32_t));
-    memset(mask, 0, newLength * sizeof(uint32_t));
-    memset(data, 0, newLength * sizeof(uint32_t));
+    mask = new uint32_t[newLength];
+    data = new uint32_t[newLength];
 
     /* Place the already existing data */
     int index = (byte - newByte) / 4;
