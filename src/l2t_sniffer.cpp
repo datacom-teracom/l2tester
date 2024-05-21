@@ -151,8 +151,8 @@ void Filter::match32bits(uint32_t _data, uint32_t _mask, uint16_t _byte) throw(L
     }
 
     /* Allocate memory */
-    mask = new uint32_t[newLength];
-    data = new uint32_t[newLength];
+    mask = new uint32_t[newLength]{};
+    data = new uint32_t[newLength]{};
 
     /* Place the already existing data */
     int index = (byte - newByte) / 4;
