@@ -73,7 +73,7 @@ def send_frame(frame_mapping):
 ## Send And Check frames ###########################################################################
 
 def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False, timeout=1.0,
-                   do_not_log_error_on_error=False, print_raw_packets=False):
+                   do_not_log_error_on_error=False, print_raw_packets=False, ignored_types=None):
     """ Send frames from PC interfaces and monitor interfaces for received frames.
     @param send_frames                Dictionary containing a map of { iface : [ frame_list ], ... }
     @param expected_frames            Dictionary containing a map of { iface : [ frame_list ], ... }
@@ -81,6 +81,7 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
     @param timeout                    Time spent for interface monitoring.
     @param do_not_log_error_on_error  Do not log as error whenever an error occurs.
     @param print_raw_packets          Log packets as raw hex string
+    @param ignored_types              Packet types to be ignored whenever unexpected frames appears
 
     This function is intended to do a frame-by-frame analysis with full frame match.
     The first parameter specify what frames should be sent, and from which interfaces,
@@ -137,17 +138,45 @@ def send_and_check(send_frames, expected_frames, ignore_unexpected_frames=False,
             logger.error(err_msg_missed)
         err_msg = "{0}{1}\n".format(err_msg, err_msg_missed)
 
+    ignored_type_found = False
+
     if (unexpected_frames and not ignore_unexpected_frames):
         num_unexpected = reduce(lambda total, list: total+len(list), unexpected_frames.values(), 0)
         err_msg_unexpected = "Received {0} unexpected frames:\n{1}".format(
             num_unexpected, frame_mapping_to_str(unexpected_frames, raw=print_raw_packets))
+
+        if ignored_types is not None:
+            frames_found = 0
+            for ignored_type in ignored_types:
+                err_msg_unexpected_lines = err_msg_unexpected.splitlines()
+
+                for line in err_msg_unexpected_lines:
+                    if ignored_type in line:
+                        num_frames = int(line.split('[x')[-1].strip(']'))
+                        frames_found += num_frames
+
+            if num_unexpected == frames_found:
+                ignored_type_found = True
+                do_not_log_error_on_error = True
+                logger.info("All {0} unexpected frames were ignored".format(num_unexpected))
+
+            if num_unexpected > frames_found:
+                err_msg_received_more = "The number of unexpected frames received is higher" \
+                " than the number of {0} frames".format(ignored_types)
+                err_msg = "{0}{1}\n".format(err_msg, err_msg_received_more)
+
+            elif num_unexpected < frames_found:
+                err_msg_received_less = "The number of unexpected frames received is lower than" \
+                " the number of {0} frames".format(ignored_types)
+                err_msg = "{0}{1}\n".format(err_msg, err_msg_received_less)
+
         if do_not_log_error_on_error:
             logger.info(err_msg_unexpected)
         else:
             logger.error(err_msg_unexpected)
         err_msg = "{0}{1}\n".format(err_msg, err_msg_unexpected)
 
-    if not err_msg == "":
+    if not err_msg == "" and not ignored_type_found:
         raise AssertionError(err_msg)
 
 
