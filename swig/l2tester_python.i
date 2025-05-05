@@ -25,5 +25,5 @@
 
 %typemap(directorin) (void* _packet, size_t _size)
 %{
-    $input = PyString_FromStringAndSize( (char*) _packet, _size );
+    $input = PyBytes_FromStringAndSize( (char*) _packet, _size );
 %}

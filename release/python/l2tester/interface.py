@@ -244,7 +244,7 @@ class Interface():
         @param enable        True to enable, False to disable.
         """
         cmd = PACKET_ADD_MEMBERSHIP if enable else PACKET_DROP_MEMBERSHIP
-        mreq = struct.pack('IHH8s', self.if_index, PACKET_MR_PROMISC, 0, "")
+        mreq = struct.pack('IHH8s', self.if_index, PACKET_MR_PROMISC, 0, bytes())
         self.sockfd.setsockopt(SOL_PACKET, cmd, mreq)
 
     def add_ip_address(self, ip_address):
