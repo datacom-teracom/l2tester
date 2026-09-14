@@ -58,19 +58,27 @@ class Stream():
             raise AssertionError("Can't check bandwidth on deleted Stream.")
             return
 
-        measures = [self.instance.iterate_reading(-1).bits_per_sec / 1000.0]
+        original_measures = [self.instance.iterate_reading(-1).bits_per_sec / 1000.0]
         for i in range(num_readings - 1):
-            measures.append(self.instance.iterate_reading().bits_per_sec / 1000.0)
+            original_measures.append(self.instance.iterate_reading().bits_per_sec / 1000.0)
+
+        # Copy the list (by using `x = list(y)`) instead of referencing it (by using `x = y`),
+        # otherwise the sort() below would reorder the original readings.
+        modified_measures = list(original_measures)
 
         if (num_ignored_readings is not 0) and ((num_ignored_readings * 2) < num_readings):
-            measures.sort()
-            measures = measures[num_ignored_readings:-num_ignored_readings]
+            modified_measures.sort()
+            modified_measures = modified_measures[num_ignored_readings:-num_ignored_readings]
 
         current_bandwidth = 0.0
-        for measure in measures:
+        for measure in modified_measures:
             current_bandwidth += measure
 
-        current_bandwidth = current_bandwidth / len(measures)
+        current_bandwidth = current_bandwidth / len(modified_measures)
+
+        logger.info("Entire readings: %s", original_measures)
+        logger.info("Readings used for calculation (sorted and trimmed by %d readings): %s",
+                    num_ignored_readings, modified_measures)
 
         if (current_bandwidth >= (1.0 - tolerance) * target_bandwidth
                 and current_bandwidth <= (1.0 + tolerance) * target_bandwidth):
